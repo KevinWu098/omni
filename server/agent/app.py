@@ -16,7 +16,7 @@ async def _run_nl_command(command: str):
     # Create browser session with CDP connection  
     session = BrowserSession(  
         cdp_url="http://localhost:9222",  
-        browser_profile=BrowserProfile(headless=True, disable_security=True)  
+        browser_profile=BrowserProfile(viewport_expansion=-1,highlight_elements=True, headless=True, disable_security=True)  
     )  
       
     # Initialize LLM  
