@@ -5,9 +5,8 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { GripHorizontalIcon } from "lucide-react";
 
-export function Content() {
+export function Viewer() {
     return (
         <ResizablePanelGroup
             direction="vertical"

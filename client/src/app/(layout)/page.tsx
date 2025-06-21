@@ -1,5 +1,5 @@
-import { Content } from "@/components/ui/builder/content";
 import { TestCard } from "@/components/ui/builder/test-card";
+import { Viewer } from "@/components/ui/builder/viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -102,7 +102,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <Content />
+            <Viewer />
         </div>
     );
 }
