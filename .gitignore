@@ -1,0 +1,4 @@
+.vs/slnx.sqlite
+.vs/slnx.sqlite-journal
+server/testing/.python-version
+server/testing/pyproject.toml
