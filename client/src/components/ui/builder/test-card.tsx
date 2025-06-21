@@ -6,7 +6,7 @@ interface TestCardProps {
 
 export function TestCard({ title, steps, status }: TestCardProps) {
     return (
-        <div className="border-o-background flex flex-col gap-y-4 border-t-[1px] p-4">
+        <div className="border-o-background flex flex-col gap-y-4 border-t-[1px] p-4 last:border-b-[1px]">
             <span className="text-medium text-base">{title}</span>
 
             <div className="flex flex-col gap-y-3">

@@ -1,4 +1,5 @@
 import { TestCard } from "@/components/ui/builder/test-card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -7,7 +8,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { SearchIcon } from "lucide-react";
+import { PlusSquareIcon, SearchIcon } from "lucide-react";
 
 const TEST_CARDS = [
     {
@@ -30,7 +31,7 @@ const TEST_CARDS = [
 export default function Page() {
     return (
         <div className="bg-o-background flex h-full flex-row">
-            <div className="border-o-background w-[400px]">
+            <div className="border-o-background relative w-[400px]">
                 <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
                     <span className="text-o-white text-xs font-medium leading-none">
                         Test Suite
@@ -38,7 +39,7 @@ export default function Page() {
                     <div className="bg-o-primary absolute bottom-0 left-1/2 h-[2px] w-1/2 -translate-x-1/2 translate-y-1/2" />
                 </div>
 
-                <div className="bg-o-base-background text-o-white box-border h-full border-r-2 border-t-2 border-[#141414]">
+                <div className="bg-o-base-background text-o-white box-border flex h-[calc(100%-30px)] flex-col border-r-2 border-t-2 border-[#141414]">
                     <div className="flex flex-col gap-y-4 p-4 pt-6">
                         <div className="flex flex-row gap-10">
                             <div className="flex flex-col font-medium">
@@ -73,7 +74,7 @@ export default function Page() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-1 flex-col">
                         {TEST_CARDS.map((testCard) => (
                             <TestCard
                                 key={testCard.title}
@@ -83,8 +84,25 @@ export default function Page() {
                             />
                         ))}
                     </div>
+
+                    <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
+                        <PlusSquareIcon className="text-o-muted size-5" />
+
+                        <div className="flex flex-row gap-x-2">
+                            {/* <Button
+                                variant={"ghost"}
+                                className="hover:bg-inherit hover:text-inherit"
+                            >
+                                Edit
+                            </Button> */}
+                            <Button variant={"destructive"}>
+                                Run All Tests
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
             <div>MAIN CONTENT</div>
         </div>
     );
