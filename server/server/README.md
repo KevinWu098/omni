@@ -74,9 +74,59 @@ A WebSocket server that manages client-agent communication and VM orchestration.
 }
 ```
 
-## Response Format
+## Server Response Endpoints
 
-All responses include a `type` field. Error responses:
+### Spin Up Response
+
+```json
+{
+    "type": "spin_up_response",
+    "vms": [
+        {
+            "vm_id": "uuid-string",
+            "url": "https://vm-12345678.example.com"
+        }
+    ]
+}
+```
+
+### List Agents Response
+
+```json
+{
+    "type": "list_agents_response",
+    "vms": [
+        {
+            "vm_id": "uuid-string",
+            "url": "https://vm-12345678.example.com"
+        }
+    ]
+}
+```
+
+### Command Response
+
+```json
+{
+    "type": "command_response",
+    "result": "sent 'your-command' to https://vm-url.com"
+}
+```
+
+### Agent State Broadcast (to all clients)
+
+```json
+{
+    "type": "agent_state",
+    "agent_id": "agent-uuid",
+    "state": {
+        "status": "running",
+        "progress": 75
+    }
+}
+```
+
+### Error Response
 
 ```json
 {
