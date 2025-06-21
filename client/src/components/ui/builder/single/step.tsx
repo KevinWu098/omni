@@ -25,6 +25,10 @@ export function Step() {
                 <span className="text-sm font-medium">
                     Navigate to landing page
                 </span>
+
+                <div className="border-o-outline mt-1 flex items-center justify-center rounded-md border text-sm">
+                    IMAGE
+                </div>
             </CollapsibleContent>
         </Collapsible>
     );

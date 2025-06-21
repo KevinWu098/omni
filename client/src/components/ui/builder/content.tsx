@@ -17,7 +17,7 @@ export function Content() {
 
     return (
         <div className="bg-o-background flex h-full flex-row">
-            <div className="border-o-background relative w-[500px]">
+            <div className="border-o-background relative w-[400px] min-w-[400px]">
                 <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
                     <span className="text-o-white text-xs font-medium leading-none">
                         Test Suite
@@ -29,11 +29,14 @@ export function Content() {
                     <div className="bg-o-base-background text-o-white flex h-[calc(100%-30px)] flex-col">
                         <TestCard
                             {...selectedTest}
-                            handleTestClick={() => setSelectedTest(null)}
+                            handleTestClick={null}
                         />
 
-                        <div className="border-o-background flex grow flex-col gap-y-4 border-t p-4">
-                            <Step />
+                        <div className="border-o-background flex max-h-[calc(100%-200px)] grow flex-col gap-y-4 border-t p-4">
+                            <div className="flex flex-col gap-y-4 overflow-y-auto">
+                                <Step />
+                                <Step />
+                            </div>
 
                             <div className="border-outline border-o-muted-dark hover:border-o-muted group flex w-full justify-center rounded-md border border-dashed p-2 hover:cursor-pointer">
                                 <PlusIcon className="text-o-muted group-hover:text-o-muted-light size-4" />
@@ -45,6 +48,7 @@ export function Content() {
                                 <Button
                                     variant={"ghost"}
                                     className="hover:bg-inherit hover:text-inherit"
+                                    onClick={() => setSelectedTest(null)}
                                 >
                                     Cancel
                                 </Button>
