@@ -50,22 +50,28 @@ const config: Config = {
                     "4": "hsl(var(--chart-4))",
                     "5": "hsl(var(--chart-5))",
                 },
-                dp: {
-                    text: "rgba(255,255,255,0.75)",
-                    outline: "rgba(255,255,255,0.25)",
-                    headingText: "#FFFFFF",
-                    card: "#2D2D2D",
-                    hoverCard: "#3C3C3C",
-                    primary: "#69D2FF",
-                    primary2: "#49B5E2",
-                    inputLabelColor: "rgba(255,255,255,0.5)",
-                    outlineNotSelected: "#3B3B3B",
-                    nonEmergency: "#47FF85",
-                    critical: "#F40000",
-                    background: "#1E1E1E",
-                    inputText: "#9F9F9F",
-                    medium: "#FABC1F",
-                    backgroundHover: "#222222",
+                o: {
+                    background: {
+                        DEFAULT: "#121111",
+                        light: "#1A1919",
+                    },
+                    base: {
+                        background: "#1F1E1E",
+                        foreground: "#222121",
+                    },
+                    outline: "#2F2F2F",
+                    muted: {
+                        DEFAULT: "#8B8B8B",
+                        light: "#B6B6B6",
+                        medium: "#595959",
+                        dark: "#414141",
+                    },
+                    header: "#080808",
+                    white: "#FFFFFF",
+                    primary: "#FFC926",
+                    green: "#6DE848",
+                    red: "#F13837",
+                    claudeGray: "#C2C0B6",
                 },
             },
             borderRadius: {
@@ -74,7 +80,7 @@ const config: Config = {
                 sm: "calc(var(--radius) - 4px)",
             },
             transitionDuration: {
-                5000: "5000ms",
+                "5000": "5000ms",
             },
             spacing: {
                 "15": "60px",
@@ -85,8 +91,6 @@ const config: Config = {
             },
         },
     },
-    plugins: [
-        require("tailwindcss-animate"),
-    ],
+    plugins: [require("tailwindcss-animate")],
 };
 export default config;
