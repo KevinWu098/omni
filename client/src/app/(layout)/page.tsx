@@ -1,4 +1,5 @@
 import { TestCard } from "@/components/ui/builder/test-card";
+import { Viewer } from "@/components/ui/builder/viewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -75,12 +76,10 @@ export default function Page() {
                     </div>
 
                     <div className="flex flex-1 flex-col">
-                        {TEST_CARDS.map((testCard) => (
+                        {TEST_CARDS.map((testCard, index) => (
                             <TestCard
-                                key={testCard.title}
-                                title={testCard.title}
-                                steps={testCard.steps}
-                                status={testCard.status}
+                                key={index}
+                                {...testCard}
                             />
                         ))}
                     </div>
@@ -103,7 +102,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <div>MAIN CONTENT</div>
+            <Viewer />
         </div>
     );
 }
