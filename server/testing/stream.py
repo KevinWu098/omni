@@ -1,232 +1,289 @@
 #!/usr/bin/env python3
 """
-Playwright   → JPEG frames @ 3 fps
-FFmpeg PUTs → in-memory HLS (playlist + TS) to Flask
-Client      → hls.js scrubs/plays live stream
+Stable-latency Playwright → RAM-only HLS streamer
+• 1-second, self-contained segments (≈1-1.3 s glass-to-glass)
+• LIVE / DVR toggle with accurate latency read-out
 """
 
 import asyncio, io, signal, sys, time, subprocess, threading
-from pathlib import Path
 from collections import deque
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import numpy as np
 from PIL import Image
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response
 from werkzeug.serving import make_server
+from playwright.async_api import async_playwright
 
-from playwright.async_api import async_playwright  # pip install playwright
-
-HOST, PORT = "127.0.0.1", 5000           # Flask + FFmpeg target
-WIDTH, HEIGHT, FPS = 1280, 720, 3        # capture / encode params
-SEG_KEEP = 50                            # how many TS segments in RAM
-
+# ── config ──────────────────────────────────────────────────────────────
+HOST, PORT = "127.0.0.1", 5000
+W, H, FPS  = 1280, 720, 3
+SEG_DUR    = 1                     # seconds per HLS segment
+SEG_KEEP   = 600                   # how many segments to keep in RAM
 
 # ════════════════════════════════════════════════════════════════════════
-#  In-memory store for playlist + segments
+#  In-memory playlist + segments
 # ════════════════════════════════════════════════════════════════════════
 class MemHLS:
     def __init__(self, keep=SEG_KEEP):
         self.playlist: str = ""
         self.segs: Dict[str, bytes] = {}
-        self.order = deque(maxlen=keep)  # rolling key order
+        self.order = deque(maxlen=keep)
 
-    # playlist ----------------------------------------------------------------
     def put_playlist(self, data: bytes):
-        self.playlist = data.decode("utf-8")
+        self.playlist = data.decode()
+
+    def put_segment(self, name: str, data: bytes):
+        self.segs[name] = data
+        self.order.append(name)
+        while len(self.order) > self.order.maxlen:
+            self.segs.pop(self.order.popleft(), None)
 
     def get_playlist(self) -> str:
         return self.playlist
 
-    # segments -----------------------------------------------------------------
-    def put_seg(self, name: str, data: bytes):
-        self.segs[name] = data
-        self.order.append(name)
-        # drop oldest beyond keep limit
-        while len(self.order) > self.order.maxlen:
-            old = self.order.popleft()
-            self.segs.pop(old, None)
-
-    def get_seg(self, name: str) -> Optional[bytes]:
+    def get_segment(self, name: str) -> Optional[bytes]:
         return self.segs.get(name)
 
 
-MEM = MemHLS()     # global instance Flask + recorder share
-
+STORE = MemHLS()
 
 # ════════════════════════════════════════════════════════════════════════
-#  Playwright page grab → feed FFmpeg stdin
+#  Recorder  (Playwright page → FFmpeg stdin → HLS PUT back to Flask)
 # ════════════════════════════════════════════════════════════════════════
-class ScreenRecorder:
+class Recorder:
     def __init__(self, page):
         self.page = page
         self.proc: Optional[subprocess.Popen] = None
         self.running = False
-        self.frames = 0
 
     async def start(self):
         self._spawn_ffmpeg()
         self.running = True
-        asyncio.create_task(self._loop())
-        print("🎥 Recorder started (memory-only HLS)")
+        asyncio.create_task(self._capture_loop())
 
     async def stop(self):
         self.running = False
         if self.proc:
             try:
-                self.proc.stdin.close(); self.proc.wait(5)
-            except Exception: self.proc.kill()
-            self.proc = None
-        print("🛑 Recorder stopped")
+                self.proc.stdin.close()
+                self.proc.wait(timeout=3)
+            except Exception:
+                self.proc.kill()
 
-    # --------------------------------------------------------------------------
     def _spawn_ffmpeg(self):
-        seg_url   = f"http://{HOST}:{PORT}/segments/seg%05d.ts"
-        plist_url = f"http://{HOST}:{PORT}/playlist.m3u8"
+        seg_url = f"http://{HOST}:{PORT}/segments/seg%09d.ts"
+        pl_url  = f"http://{HOST}:{PORT}/playlist.m3u8"
 
         cmd = [
-            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "ffmpeg", "-hide_banner", "-loglevel", "quiet", "-y",
             "-f", "rawvideo", "-pix_fmt", "rgb24",
-            "-s", f"{WIDTH}x{HEIGHT}", "-r", str(FPS), "-i", "-",
+            "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
 
-            "-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency",
-            "-crf", "30", "-g", str(FPS*2),
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-tune", "zerolatency",
+            "-crf", "30",
+            "-g", "3", "-keyint_min", "3",       # every segment starts with I-frame
 
-            # HLS → PUT  playlist + segs back to Flask ----------------------
             "-f", "hls",
-            "-method", "PUT",                     # HTTP PUT
-            "-hls_time", "2",
-            "-hls_list_size", "10",
-            "-hls_flags", "delete_segments+independent_segments",
+            "-method", "PUT",
+            "-hls_time", str(SEG_DUR),
+            "-hls_list_size", "6",
+            "-hls_flags",
+              "delete_segments+independent_segments+program_date_time",
             "-hls_base_url", "/segments/",
             "-hls_segment_filename", seg_url,
             "-hls_playlist_type", "event",
-            plist_url
+            pl_url,
         ]
-        print("📝 FFmpeg:", " ".join(cmd))
         self.proc = subprocess.Popen(
-            cmd, stdin=subprocess.PIPE,
-            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, bufsize=10**7
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            bufsize=10**7,
         )
 
-    # --------------------------------------------------------------------------
-    async def _loop(self):
-        interval = 1 / FPS
+    async def _capture_loop(self):
+        frame_interval = 1 / FPS
         while self.running:
             t0 = time.perf_counter()
 
-            # Playwright screenshot → RGB numpy
-            buf = await self.page.screenshot(type="jpeg", quality=80)
-            img = Image.open(io.BytesIO(buf)).convert("RGB")
-            rgb = np.asarray(img.resize((WIDTH, HEIGHT), Image.LANCZOS),
-                             dtype=np.uint8)
+            jpeg = await self.page.screenshot(type="jpeg", quality=75)
+            rgb  = np.asarray(
+                Image.open(io.BytesIO(jpeg))
+                     .resize((W, H), Image.LANCZOS)
+                     .convert("RGB"),
+                np.uint8,
+            )
 
             try:
                 self.proc.stdin.write(rgb.tobytes())
-                self.frames += 1
             except BrokenPipeError:
-                print("❌ FFmpeg pipe closed")
-                self.running = False; break
+                break
 
-            await asyncio.sleep(max(0, interval - (time.perf_counter()-t0)))
-
+            elapsed = time.perf_counter() - t0
+            await asyncio.sleep(max(0, frame_interval - elapsed))
 
 # ════════════════════════════════════════════════════════════════════════
-#  Flask: accepts PUTs from FFmpeg  +  serves to browser
+#  Flask app  (serves player & handles PUTs from FFmpeg)
 # ════════════════════════════════════════════════════════════════════════
-def build_app():
+def create_app():
     app = Flask(__name__)
 
-    # index / player
-    PLAYER = """<!doctype html><html><head>
-    <title>Stream</title><style>html,body{margin:0;background:#000}video{width:100%}</style></head>
-    <body><video id=v controls autoplay muted playsinline></video>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-    const v=document.getElementById('v');
-    if(Hls.isSupported()){const h=new Hls({lowLatencyMode:true});
-      h.loadSource('/playlist.m3u8');h.attachMedia(v);}
-    else if(v.canPlayType('application/vnd.apple.mpegurl')){v.src='/playlist.m3u8'}
-    else alert('No HLS support');
-    </script></body></html>"""
+    PLAYER_HTML = """
+<!doctype html><html><head>
+<title>Live Stream</title>
+<style>
+html,body{margin:0;background:#000;font-family:sans-serif;color:#fff}
+#bar{padding:6px;background:#111;display:flex;gap:8px;align-items:center}
+button{padding:2px 6px}
+/* Hide loading spinner completely */
+video::-webkit-media-controls-loading-panel {display: none !important;}
+video::-webkit-media-controls-buffering-indicator {display: none !important;}
+</style></head><body>
+<div id="bar">
+  <button id="live">LIVE</button><span id="lat"></span>
+</div>
+<video id="v" playsinline muted autoplay controls style="width:100%"></video>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+let live = true;
+const v   = document.getElementById('v');
+const btn = document.getElementById('live');
+const hls = new Hls({ 
+  lowLatencyMode: true, 
+  liveSyncDurationCount: 1,
+  maxBufferLength: 2,
+  maxMaxBufferLength: 4,
+  liveMaxLatencyNum: 1
+});
 
+hls.loadSource('/playlist.m3u8');
+hls.attachMedia(v);
+
+// Enhanced live mode function
+function enforceLibeMode() {
+  if (!live) return;
+  
+  // Force to live edge if not already there
+  const currentTime = v.currentTime;
+  const duration = v.duration;
+  if (duration && currentTime < duration - 0.5) {
+    // Seek to live position using HLS.js liveSyncPosition
+    const livePos = hls.liveSyncPosition;
+    if (livePos !== null && livePos > 0) {
+      v.currentTime = livePos;
+    } else {
+      // Fallback: seek to end of buffer
+      v.currentTime = duration;
+    }
+  }
+  
+  // Force play if paused
+  if (v.paused) {
+    v.play().catch(() => {}); // Ignore errors
+  }
+}
+
+btn.onclick = () => { 
+  live = !live; 
+  btn.textContent = live ? 'LIVE' : 'DVR';
+  if (live) {
+    enforceLibeMode();
+  }
+};
+
+// Multiple event handlers to ensure live mode stays active
+hls.on(Hls.Events.LEVEL_UPDATED, () => {
+  if (live) enforceLibeMode();
+});
+
+hls.on(Hls.Events.FRAG_LOADED, () => {
+  if (live) enforceLibeMode();
+});
+
+// Prevent pausing in live mode
+v.addEventListener('pause', () => {
+  if (live) {
+    setTimeout(() => {
+      if (live && v.paused) {
+        v.play().catch(() => {});
+      }
+    }, 10);
+  }
+});
+
+// Regularly enforce live mode
+setInterval(() => {
+  if (live) enforceLibeMode();
+}, 200);
+
+// Latency display
+setInterval(() => {
+  const lat = hls.latency !== undefined ? hls.latency.toFixed(2) : '-';
+  document.getElementById('lat').textContent = ' ' + lat + ' s';
+}, 500);
+</script></body></html>
+"""
+
+    # index
     @app.route("/")
-    def index(): return PLAYER
+    @app.route("/index.html")
+    def index():
+        return PLAYER_HTML
 
-    # playlist ---------------------------------------------------------------
+    # playlist PUT / GET
     @app.route("/playlist.m3u8", methods=["PUT", "GET"])
     def playlist():
         if request.method == "PUT":
-            MEM.put_playlist(request.data)
-            return "", 200
-        data = MEM.get_playlist()
-        if not data:
-            return "Playlist not ready", 404
-        return Response(data, mimetype="application/vnd.apple.mpegurl")
+            STORE.put_playlist(request.data)
+            return ""
+        pl = STORE.get_playlist()
+        if not pl:
+            return "", 404
+        return Response(pl, mimetype="application/vnd.apple.mpegurl")
 
-    # segments ---------------------------------------------------------------
+    # segment PUT / GET
     @app.route("/segments/<name>", methods=["PUT", "GET"])
     def segment(name):
         if request.method == "PUT":
-            MEM.put_seg(name, request.data)
-            return "", 200
-        data = MEM.get_seg(name)
-        if data is None:
-            return "Segment gone", 404
-        return Response(data, mimetype="video/mp2t")
-
-    # debug ------------------------------------------------------------------
-    @app.route("/status")
-    def status():
-        return jsonify({"playlist_bytes": len(MEM.playlist),
-                        "segment_count": len(MEM.segs)})
+            STORE.put_segment(name, request.data)
+            return ""
+        data = STORE.get_segment(name)
+        return Response(data, mimetype="video/mp2t") if data else ("", 404)
 
     return app
 
-
 # ════════════════════════════════════════════════════════════════════════
-#  Coordinator
+#  Orchestrator
 # ════════════════════════════════════════════════════════════════════════
-class Streamer:
-    def __init__(self, url="https://example.com", headless=False):
-        self.url, self.headless = url, headless
-        self.pw = self.browser = self.page = None
-        self.rec: Optional[ScreenRecorder] = None
-        self.httpd = make_server(HOST, PORT, build_app(), threaded=True)
+async def main():
+    # Flask
+    httpd = make_server(HOST, PORT, create_app(), threaded=True)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    print(f"Player → http://{HOST}:{PORT}")
 
-    async def start(self):
-        threading.Thread(target=self.httpd.serve_forever,
-                         daemon=True).start()
-        print(f"🌐 Flask up on http://{HOST}:{PORT}")
+    # Playwright
+    pw = await async_playwright().start()
+    browser = await pw.chromium.launch(headless=False)
+    page = await browser.new_page(viewport={'width': W, 'height': H})
+    await page.goto("https://example.com")
 
-        # launch Playwright browser
-        self.pw = await async_playwright().start()
-        self.browser = await self.pw.chromium.launch(headless=self.headless)
-        self.page = await self.browser.new_page(
-            viewport={'width': WIDTH, 'height': HEIGHT})
-        await self.page.goto(self.url)
+    recorder = Recorder(page)
+    await recorder.start()
 
-        # recorder
-        self.rec = ScreenRecorder(self.page)
-        await self.rec.start()
+    # graceful Ctrl-C
+    def shutdown(*_):
+        print("Stopping…")
+        asyncio.create_task(recorder.stop())
+        httpd.shutdown()
+        sys.exit(0)
 
-        print("🚀 Stream live — open http://127.0.0.1:5000")
+    signal.signal(signal.SIGINT, shutdown)
 
-    async def stop(self):
-        print("🛑 Shutting down …")
-        if self.rec:    await self.rec.stop()
-        if self.browser: await self.browser.close()
-        if self.pw:     await self.pw.stop()
-        self.httpd.shutdown()
-
-
-# ════════════════════════════════════════════════════════════════════════
-async def _main():
-    s = Streamer()
-    signal.signal(signal.SIGINT,
-                  lambda *_: asyncio.create_task(s.stop()) or sys.exit())
-    await s.start()
-    while True: await asyncio.sleep(1)
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
-    asyncio.run(_main())
+    asyncio.run(main())
