@@ -34,7 +34,7 @@ export function AllSidePanel({
     handleTestClick: (test: Test) => void;
 }) {
     return (
-        <div className="bg-o-base-background text-o-white box-border flex h-[calc(100%-30px)] flex-col border-r-2 border-t-2 border-[#141414]">
+        <>
             <div className="flex flex-col gap-y-4 p-4 pt-6">
                 <div className="flex flex-row gap-10">
                     <div className="flex flex-col font-medium">
@@ -90,6 +90,6 @@ export function AllSidePanel({
                     <Button variant={"destructive"}>Run All Tests</Button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

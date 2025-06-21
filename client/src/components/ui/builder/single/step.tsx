@@ -21,7 +21,7 @@ export function Step() {
                 <span>Step 1</span>
                 <Icon className="size-4" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="text-o-white">
+            <CollapsibleContent className="text-o-white space-y-1">
                 <span className="text-sm font-medium">
                     Navigate to landing page
                 </span>

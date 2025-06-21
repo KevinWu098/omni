@@ -139,12 +139,18 @@ def create_app():
 html,body{margin:0;background:#000;font-family:sans-serif;color:#fff}
 #bar{padding:6px;background:#111;display:flex;gap:8px;align-items:center}
 button{padding:2px 6px}
+#timeInfo{margin-left:auto;font-size:12px;color:#999}
 /* Hide loading spinner completely */
 video::-webkit-media-controls-loading-panel {display: none !important;}
 video::-webkit-media-controls-buffering-indicator {display: none !important;}
+/* Hide controls when in live mode */
+.live-mode video {pointer-events: none;}
+.live-mode video::-webkit-media-controls {display: none !important;}
+.live-mode video::-webkit-media-controls-panel {display: none !important;}
 </style></head><body>
 <div id="bar">
   <button id="live">LIVE</button><span id="lat"></span>
+  <div id="timeInfo"></div>
 </div>
 <video id="v" playsinline muted autoplay controls style="width:100%"></video>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -152,6 +158,7 @@ video::-webkit-media-controls-buffering-indicator {display: none !important;}
 let live = true;
 const v   = document.getElementById('v');
 const btn = document.getElementById('live');
+const timeInfo = document.getElementById('timeInfo');
 const hls = new Hls({ 
   lowLatencyMode: true, 
   liveSyncDurationCount: 1,
@@ -163,20 +170,50 @@ const hls = new Hls({
 hls.loadSource('/playlist.m3u8');
 hls.attachMedia(v);
 
-// Enhanced live mode function
-function enforceLibeMode() {
+// Function to update time display
+function updateTimeDisplay() {
+  const currentTime = v.currentTime || 0;
+  const duration = v.duration || 0;
+  
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
+  if (live) {
+    timeInfo.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+  } else {
+    timeInfo.textContent = '';
+  }
+}
+
+// Function to toggle live mode UI
+function toggleLiveModeUI() {
+  if (live) {
+    document.body.classList.add('live-mode');
+    v.removeAttribute('controls');
+  } else {
+    document.body.classList.remove('live-mode');
+    v.setAttribute('controls', '');
+  }
+  updateTimeDisplay();
+}
+
+// Enhanced live mode function - always go to absolute latest frame
+function enforceLiveMode() {
   if (!live) return;
   
-  // Force to live edge if not already there
-  const currentTime = v.currentTime;
+  // Always seek to the absolute latest frame
   const duration = v.duration;
-  if (duration && currentTime < duration - 0.5) {
-    // Seek to live position using HLS.js liveSyncPosition
+  if (duration && duration > 0) {
+    // Use HLS.js liveSyncPosition for most accurate live position
     const livePos = hls.liveSyncPosition;
     if (livePos !== null && livePos > 0) {
+      // Always seek to live position, regardless of current position
       v.currentTime = livePos;
     } else {
-      // Fallback: seek to end of buffer
+      // Fallback: seek to absolute end
       v.currentTime = duration;
     }
   }
@@ -190,18 +227,22 @@ function enforceLibeMode() {
 btn.onclick = () => { 
   live = !live; 
   btn.textContent = live ? 'LIVE' : 'DVR';
+  toggleLiveModeUI();
   if (live) {
-    enforceLibeMode();
+    enforceLiveMode();
   }
 };
 
+// Initialize UI
+toggleLiveModeUI();
+
 // Multiple event handlers to ensure live mode stays active
 hls.on(Hls.Events.LEVEL_UPDATED, () => {
-  if (live) enforceLibeMode();
+  if (live) enforceLiveMode();
 });
 
 hls.on(Hls.Events.FRAG_LOADED, () => {
-  if (live) enforceLibeMode();
+  if (live) enforceLiveMode();
 });
 
 // Prevent pausing in live mode
@@ -215,10 +256,26 @@ v.addEventListener('pause', () => {
   }
 });
 
-// Regularly enforce live mode
+// Prevent seeking in live mode
+v.addEventListener('seeking', () => {
+  if (live) {
+    setTimeout(() => {
+      if (live) {
+        enforceLiveMode();
+      }
+    }, 10);
+  }
+});
+
+// Regularly enforce live mode - more aggressively
 setInterval(() => {
-  if (live) enforceLibeMode();
-}, 200);
+  if (live) enforceLiveMode();
+}, 100); // More frequent updates
+
+// Update time display regularly
+setInterval(() => {
+  updateTimeDisplay();
+}, 250);
 
 // Latency display
 setInterval(() => {
