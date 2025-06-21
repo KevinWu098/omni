@@ -1,3 +1,4 @@
+import { TestCard } from "@/components/ui/builder/test-card";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -7,6 +8,24 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { SearchIcon } from "lucide-react";
+
+const TEST_CARDS = [
+    {
+        title: "Navigate to .parse() documentation",
+        steps: 3,
+        status: "enabled",
+    },
+    {
+        title: "Navigate to .parse() documentation",
+        steps: 3,
+        status: "enabled",
+    },
+    {
+        title: "Navigate to .parse() documentation",
+        steps: 3,
+        status: "enabled",
+    },
+];
 
 export default function Page() {
     return (
@@ -20,7 +39,7 @@ export default function Page() {
                 </div>
 
                 <div className="bg-o-base-background text-o-white box-border h-full border-r-2 border-t-2 border-[#141414]">
-                    <div className="flex flex-col gap-2 p-4">
+                    <div className="flex flex-col gap-y-4 p-4 pt-6">
                         <div className="flex flex-row gap-10">
                             <div className="flex flex-col font-medium">
                                 <span className="text-xs">Total Tests</span>
@@ -32,26 +51,38 @@ export default function Page() {
                             </div>
                         </div>
 
-                        <Input
-                            placeholder="Find Test"
-                            startIcon={SearchIcon}
-                        />
-
-                        {/* TODO: Fix Select styling */}
-                        <Select>
-                            <SelectTrigger className="bg-o-background-light focus-visible:ring-o-muted h-8 w-full p-2">
-                                <SelectValue placeholder="Sort Order" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="recent">Recent</SelectItem>
-                                <SelectItem value="alphabetical">
-                                    Alphabetical
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="flex flex-col gap-y-2">
+                            <Input
+                                placeholder="Find Test"
+                                startIcon={SearchIcon}
+                            />
+                            {/* TODO: Fix Select styling */}
+                            <Select>
+                                <SelectTrigger className="bg-o-background-light focus-visible:ring-o-muted h-8 w-full p-2">
+                                    <SelectValue placeholder="Sort Order" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="recent">
+                                        Recent
+                                    </SelectItem>
+                                    <SelectItem value="alphabetical">
+                                        Alphabetical
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
-                    <div>SIDE PANEL</div>
+                    <div className="flex flex-col">
+                        {TEST_CARDS.map((testCard) => (
+                            <TestCard
+                                key={testCard.title}
+                                title={testCard.title}
+                                steps={testCard.steps}
+                                status={testCard.status}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
             <div>MAIN CONTENT</div>

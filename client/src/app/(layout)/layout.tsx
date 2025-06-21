@@ -8,7 +8,7 @@ export default function Layout({
                     Omni
                 </span>
             </div>
-            <div className="h-[calc(100dvh-40px)] w-full">{children}</div>
+            <div className="h-[calc(100dvh-30px)] w-full">{children}</div>
         </div>
     );
 }
