@@ -1,5 +1,6 @@
 import { type Test } from "@/components/builder/content";
 import { cn } from "@/lib/utils";
+import { motion } from "motion/react";
 
 type TestCardProps = Test & {
     handleTestClick: ((test: Test) => void) | null;
@@ -12,7 +13,11 @@ const STATUS_COLORS: Record<Test["status"], string> = {
 
 export function TestCard({ handleTestClick, ...test }: TestCardProps) {
     return (
-        <div
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
             className={cn(
                 "border-o-background flex flex-col gap-y-4 border-t-[1px] p-4 last:border-b-[1px]",
                 handleTestClick && "hover:bg-o-base-foreground cursor-pointer"
@@ -38,6 +43,6 @@ export function TestCard({ handleTestClick, ...test }: TestCardProps) {
                     <p className={STATUS_COLORS[test.status]}>{test.status}</p>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }

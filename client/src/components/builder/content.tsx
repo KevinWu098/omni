@@ -45,17 +45,6 @@ export function Content() {
             ],
             status: "enabled",
         },
-        {
-            id: "fasdfasdfdsa",
-            title: "Navigate to .parse() documentation",
-            steps: [
-                {
-                    title: "Navigate to .parse() documentation",
-                    image: "IMAGE",
-                },
-            ],
-            status: "enabled",
-        },
     ]);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
 

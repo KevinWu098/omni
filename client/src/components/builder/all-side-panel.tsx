@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
 export function AllSidePanel({
     tests,
@@ -76,13 +77,15 @@ export function AllSidePanel({
             </div>
 
             <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
-                {tests.map((testCard, index) => (
-                    <TestCard
-                        key={index}
-                        {...testCard}
-                        handleTestClick={handleTestClick}
-                    />
-                ))}
+                <AnimatePresence initial={false}>
+                    {tests.map((testCard) => (
+                        <TestCard
+                            key={testCard.id}
+                            {...testCard}
+                            handleTestClick={handleTestClick}
+                        />
+                    ))}
+                </AnimatePresence>
             </ScrollArea>
 
             <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
