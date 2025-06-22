@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { AllSidePanel } from "@/components/builder/all-side-panel";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
-import { SingleSidePanel } from "@/components/builder/single/single-side-panel";
 import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
 import { RunnerSidebar } from "@/components/runner/runner-sidebar";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
+import { PRData } from "@/lib/github";
+import { useCommandStream } from "@/lib/hooks/use-command-stream";
 import { useQueryState } from "nuqs";
+import { toast } from "sonner";
 
 export type Step = {
     title: string | null;
@@ -21,7 +22,13 @@ export type Test = {
     status: "enabled" | "disabled";
 };
 
-export function Content() {
+interface ContentProps {
+    prData?: PRData | null;
+}
+
+export function Content({ prData }: ContentProps) {
+    const { eventData, sendCommand } = useCommandStream();
+
     const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
         "mode",
         {
@@ -64,6 +71,19 @@ export function Content() {
 
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
+    const handleRunTest = () => {
+        console.log("RUNNING TEST");
+        const commands = activeTest?.steps.map((step) => step.title);
+        if (!commands?.length) {
+            toast.warning("No commands to run");
+            return;
+        }
+
+        sendCommand(commands?.join("\n"));
+    };
+
+    console.log("EVENT DATA", eventData);
+
     return (
         <div className="bg-o-background flex h-full flex-row">
             <SidebarWrapper
@@ -75,10 +95,11 @@ export function Content() {
                     tests={tests}
                     setTests={setTests}
                     setSelectedTest={setSelectedTest}
+                    handleRunTest={handleRunTest}
                 />
             </SidebarWrapper>
 
-            <Viewer />
+            <Viewer prData={prData} />
 
             <SidebarWrapper
                 title="Summary"

@@ -84,6 +84,7 @@ export function AllSidePanel({
                             key={testCard.id}
                             {...testCard}
                             handleTestClick={handleTestClick}
+                            setTests={null}
                         />
                     ))}
                 </AnimatePresence>

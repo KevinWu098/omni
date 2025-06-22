@@ -61,7 +61,7 @@ const config: Config = {
                     },
                     outline: "#2F2F2F",
                     muted: {
-                        DEFAULT: "#8B8B8B",
+                        DEFAULT: "#A4A4A4",
                         light: "#B6B6B6",
                         medium: "#595959",
                         dark: "#414141",
@@ -71,6 +71,7 @@ const config: Config = {
                     primary: "#FFC926",
                     green: "#6DE848",
                     red: "#F13837",
+                    blue: "#6096DC",
                     claudeGray: "#C2C0B6",
                 },
             },
