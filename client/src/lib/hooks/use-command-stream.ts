@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { BACKEND_URL } from "@/lib/globals";
+import { toast } from "sonner";
 
-interface UseCommandStreamProps {
-    command: string;
-}
+export type EventData = {
+    type: string;
+    content: string;
+};
 
 export function useCommandStream() {
-    const [eventData, setEventData] = useState<string[]>([]);
+    const [eventData, setEventData] = useState<EventData[]>([]);
 
     const sendCommand = async (command: string) => {
         try {
@@ -31,7 +33,39 @@ export function useCommandStream() {
 
                 // Convert the Uint8Array to text
                 const text = new TextDecoder().decode(value);
-                setEventData((prev) => [...prev, text]);
+                const data = text.split("data: ");
+
+                for (const item of data) {
+                    if (!item.trim()) {
+                        continue;
+                    }
+
+                    // Extract type and content using regex
+                    const typeMatch =
+                        item.match(/'type':\s*'([^']*)'/) ||
+                        item.match(/'type':\s*"([^"]*)"/) ||
+                        [];
+                    const contentMatch =
+                        item.match(/'content':\s*'([^']*)'/) ||
+                        item.match(/'content':\s*"([^"]*)"/) ||
+                        [];
+
+                    if (typeMatch[1] !== "log") {
+                        continue;
+                    }
+
+                    if (typeMatch[1] && contentMatch[1]) {
+                        const eventData = {
+                            type: typeMatch[1],
+                            content: contentMatch[1],
+                        };
+                        console.log(eventData);
+                        setEventData((prev) => [...prev, eventData]);
+                    } else {
+                        console.log("Failed to parse:", item);
+                        toast.warning("Error parsing event data");
+                    }
+                }
             }
         } catch (error) {
             console.error("Error:", error);
