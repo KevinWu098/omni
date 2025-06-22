@@ -18,6 +18,7 @@ export type Step = {
 export type Test = {
     id: string;
     title: string;
+    url: string;
     steps: Step[];
     status: "enabled" | "disabled";
 };
@@ -63,12 +64,9 @@ export function Content({ prData }: ContentProps) {
     const [tests, setTests] = useState<Test[]>([
         {
             id: "aa",
-            title: "Navigate to .parse() documentation",
+            title: "Navigate to peterportal.org",
+            url: "https://peterportal.org",
             steps: [
-                {
-                    title: "Navigate to peterportal.org",
-                    image: "IMAGE",
-                },
                 {
                     title: "Press the x on the pop-up, only if there is one",
                     image: "IMAGE",
@@ -82,11 +80,11 @@ export function Content({ prData }: ContentProps) {
                     image: "IMAGE",
                 },
                 {
-                    title: "Click on Shindler's name",
+                    title: "Click on 'CS 162'",
                     image: "IMAGE",
                 },
                 {
-                    title: "Scroll down to the first Review",
+                    title: "Scroll down",
                     image: "IMAGE",
                 },
             ],
@@ -94,6 +92,7 @@ export function Content({ prData }: ContentProps) {
         },
         {
             id: "sdfsfsf",
+            url: "https://docs.python.org/3/library/stdtypes.html#str.parse",
             title: "Navigate to .parse() documentation",
             steps: [
                 {
@@ -109,13 +108,12 @@ export function Content({ prData }: ContentProps) {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     const handleRunTest = () => {
-        const commands = activeTest?.steps.map((step) => step.title);
+        const commands = ["Navigate to " + activeTest?.url, ...activeTest?.steps.map((step) => step.title as string) as string[]];
         if (!commands?.length) {
             toast.warning("No commands to run");
             return;
         }
-
-        sendCommand(commands?.join("\n"), defaultRunId);
+        sendCommand(commands, defaultRunId);
     };
 
     return (
