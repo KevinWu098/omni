@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { StreamsEventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
 import { PentagonIcon } from "lucide-react";
 
@@ -17,48 +18,31 @@ type Agent = {
     events: Event[];
 };
 
-const agents: Agent[] = [
-    {
-        id: "1",
-        name: "Agent 1",
-        events: [{ id: "1", type: "action", timestamp: 1000 }],
-    },
-    {
-        id: "2",
-        name: "Agent 2",
-        events: [
-            { id: "1", type: "action", timestamp: 2500 },
-            { id: "2", type: "action", timestamp: 5800 },
-            { id: "3", type: "action", timestamp: 8900 },
-        ],
-    },
-    {
-        id: "3",
-        name: "Agent 3",
-        events: [
-            { id: "1", type: "action", timestamp: 1500 },
-            { id: "2", type: "action", timestamp: 4200 },
-            { id: "3", type: "action", timestamp: 7300 },
-            { id: "4", type: "action", timestamp: 9500 },
-        ],
-    },
-    ...Array(12).fill({
-        id: "1",
-        name: "Agent 1",
-        events: [
-            { id: "1", type: "action", timestamp: 3100 },
-            { id: "2", type: "action", timestamp: 6400 },
-            { id: "3", type: "action", timestamp: 9800 },
-        ],
-    }),
-];
-
-export function Timeline() {
+export function Timeline({ eventData }: { eventData: StreamsEventData }) {
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Convert StreamsEventData to Agent[]
+    const agents: Agent[] = Object.entries(eventData).map(
+        ([streamId, events]) => ({
+            id: streamId,
+            name: `Stream ${streamId}`,
+            events: events.map((event, index) => ({
+                id: index.toString(),
+                type: event.type,
+                timestamp: event.timeStamp,
+            })),
+        })
+    );
+
     const allEvents = agents.flatMap((agent) => agent.events);
-    const minTimestamp = 0;
+    const minTimestamp =
+        allEvents.length > 0
+            ? Math.min(...allEvents.map((e) => e.timestamp))
+            : 0;
     const maxTimestamp =
-        Math.max(...allEvents.map((event) => event.timestamp)) + 5000;
+        allEvents.length > 0
+            ? Math.max(...allEvents.map((e) => e.timestamp)) + 5000
+            : minTimestamp + 5000;
 
     const duration = maxTimestamp - minTimestamp;
 
@@ -144,10 +128,10 @@ export function Timeline() {
                                         transform: "translateX(-50%)",
                                     }}
                                 >
-                                    <div className="translate-x-1/2 text-[10px] text-o-muted">
+                                    <div className="text-o-muted translate-x-1/2 text-[10px]">
                                         {timeStr}
                                     </div>
-                                    <div className="absolute left-1/2 top-4 h-3 w-[1px] -translate-x-1/2 bg-o-muted-dark" />
+                                    <div className="bg-o-muted-dark absolute left-1/2 top-4 h-3 w-[1px] -translate-x-1/2" />
                                 </div>
                             );
                         })}
@@ -171,7 +155,7 @@ export function Timeline() {
                                         left: `${getPositionPercentage(timestamp)}%`,
                                     }}
                                 >
-                                    <div className="absolute left-1/2 top-[6px] h-2 w-[1px] -translate-x-1/2 bg-o-muted-dark" />
+                                    <div className="bg-o-muted-dark absolute left-1/2 top-[6px] h-2 w-[1px] -translate-x-1/2" />
                                 </div>
                             );
                         })}
@@ -195,7 +179,7 @@ export function Timeline() {
                                         left: `${getPositionPercentage(timestamp)}%`,
                                     }}
                                 >
-                                    <div className="absolute left-1/2 top-1 h-1 w-[1px] -translate-x-1/2 bg-o-muted-dark" />
+                                    <div className="bg-o-muted-dark absolute left-1/2 top-1 h-1 w-[1px] -translate-x-1/2" />
                                 </div>
                             );
                         })}
@@ -204,7 +188,7 @@ export function Timeline() {
                     {/* Current time indicator */}
                     <div className="relative z-10">
                         <div
-                            className="duration-50 absolute bottom-0 top-0 w-0.5 bg-o-primary transition-transform"
+                            className="duration-50 bg-o-primary absolute bottom-0 top-0 w-0.5 transition-transform"
                             style={{
                                 left: `${getPositionPercentage(currentTime)}%`,
                                 transform: "translateX(-50%)",
@@ -212,7 +196,7 @@ export function Timeline() {
                             }}
                         />
                         <PentagonIcon
-                            className="absolute top-0 size-4 -translate-x-1/2 -translate-y-1/3 rotate-180 fill-o-primary text-o-primary"
+                            className="fill-o-primary text-o-primary absolute top-0 size-4 -translate-x-1/2 -translate-y-1/3 rotate-180"
                             style={{
                                 left: `${getPositionPercentage(currentTime)}%`,
                             }}
@@ -220,7 +204,7 @@ export function Timeline() {
                     </div>
                 </div>
 
-                <div className="relative mt-2 flex h-full flex-col border-t-2 border-o-background pb-2 pt-5">
+                <div className="border-o-background relative mt-2 flex h-full flex-col border-t-2 pb-2 pt-5">
                     {/* 5-second interval vertical lines */}
                     <div className="pointer-events-none absolute inset-0 z-20">
                         {Array.from({
@@ -232,7 +216,7 @@ export function Timeline() {
                             return (
                                 <div
                                     key={`vertical-${timestamp}`}
-                                    className="absolute z-50 box-border h-[calc(100%)] -translate-x-1/2 border-l border-dashed border-o-outline"
+                                    className="border-o-outline absolute z-50 box-border h-[calc(100%)] -translate-x-1/2 border-l border-dashed"
                                     style={{
                                         left: `${getPositionPercentage(timestamp)}%`,
                                     }}
@@ -247,7 +231,7 @@ export function Timeline() {
                                     key={`${agent.id}-${agent.name}-${index}`}
                                     className="relative"
                                 >
-                                    <div className="h-[2px] w-full bg-o-muted-dark" />
+                                    <div className="bg-o-muted-dark h-[2px] w-full" />
                                     {agent.events.map((event) => {
                                         const isNear =
                                             Math.abs(
