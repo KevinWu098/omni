@@ -149,6 +149,20 @@ export function Content({ prData }: ContentProps) {
 
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
+    // Add two-arg wrapper for sendCommand
+    const sendCommandWrapper = (commands: string[], id: string | undefined) =>
+        sendCommand(commands, id, "0");
+
+    // Add callback to update test URL state
+    const handleUpdateTestUrl = (newUrl: string) => {
+        if (!activeTest) return;
+        setTests((prevTests) =>
+            prevTests.map((test) =>
+                test.id === activeTest.id ? { ...test, url: newUrl } : test
+            )
+        );
+    };
+
     const handleRunTest = () => {
         const commands = [
             "Navigate to " + activeTest?.url,
@@ -162,7 +176,7 @@ export function Content({ prData }: ContentProps) {
             return;
         }
 
-        sendCommand(commands, undefined, "0");
+        sendCommandWrapper(commands, undefined);
     };
 
     return (
@@ -198,7 +212,7 @@ export function Content({ prData }: ContentProps) {
                                     setSelectedTest={setSelectedTest}
                                     handleRunTest={handleRunTest}
                                     runId={runId}
-                                    sendCommand={sendCommand}
+                                    sendCommand={sendCommandWrapper}
                                 />
                             </SidebarWrapper>
                         </motion.div>
@@ -226,6 +240,7 @@ export function Content({ prData }: ContentProps) {
                                 eventData={eventData}
                                 activeTest={activeTest}
                                 runId={runId}
+                                updateTestUrl={handleUpdateTestUrl}
                             />
                         ) : (
                             <RunnerViewer tests={tests} />
