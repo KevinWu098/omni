@@ -25,16 +25,10 @@ def diag():
 def run_command():
 
     data = request.get_json(force=True)
-    url = data.get("url")
     commands = data.get("commands")
 
     if not commands:
         return jsonify({"error": "Missing 'commands' in JSON body"}), 400
-
-    if not url:
-        return jsonify({"error": "Missing 'url' in JSON body"}), 400
-
-    commands.insert(0, f"Navigate to '{url}'")
 
     run_id = data.get(
         "run_id", None
