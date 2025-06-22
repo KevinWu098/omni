@@ -53,27 +53,28 @@ export function AllSidePanel({
 
     return (
         <>
-            <div className="flex flex-col gap-y-4 p-4 pt-6">
-                <div className="flex flex-row gap-10">
+            <div className="flex flex-col gap-y-4 px-2 py-4 pt-6">
+                <div className="flex flex-row gap-10 px-2">
                     <BigText
                         label="Total Tests"
                         value="27"
                     />
-                    <BigText
+                    {/* <BigText
                         label="Total Tests"
                         value="27"
-                    />
+                    /> */}
                 </div>
 
                 <div className="flex flex-col gap-y-2">
                     <Input
-                        placeholder="Find Test"
+                        placeholder="Search Tests"
+                        className="text-xs font-medium"
                         startIcon={SearchIcon}
                     />
                     {/* TODO: Fix Select styling */}
                     <Select>
-                        <SelectTrigger className="bg-o-background-light focus-visible:ring-o-muted h-8 w-full p-2">
-                            <SelectValue placeholder="Sort Order" />
+                        <SelectTrigger className="h-8 w-full bg-o-background-light p-2 text-xs text-o-muted-light focus-visible:ring-o-muted">
+                            <SelectValue placeholder="Sort: Recent" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="recent">Recent</SelectItem>
@@ -84,6 +85,8 @@ export function AllSidePanel({
                     </Select>
                 </div>
             </div>
+
+            <div className="h-[1px] w-full bg-o-background" />
 
             <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
                 <AnimatePresence initial={false}>
@@ -98,9 +101,9 @@ export function AllSidePanel({
                 </AnimatePresence>
             </ScrollArea>
 
-            <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
+            <div className="mx-2 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1 ring-o-outline">
                 <PlusSquareIcon
-                    className="text-o-muted size-5 hover:cursor-pointer"
+                    className="size-5 text-o-muted hover:cursor-pointer"
                     onClick={handleAddTest}
                 />
 

@@ -309,8 +309,8 @@ export function VideoPlayer({ mode, multiple, runId }: VideoPlayerProps) {
             >
                 {/* Loading state */}
                 {isLoading && (
-                    <div className="bg-o-background/80 absolute inset-0 flex items-center justify-center">
-                        <Loader2Icon className="text-o-primary animate-spin duration-500" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-o-background/80">
+                        <Loader2Icon className="animate-spin text-o-primary duration-500" />
                     </div>
                 )}
 
@@ -344,12 +344,12 @@ export function VideoPlayer({ mode, multiple, runId }: VideoPlayerProps) {
 
             {!multiple && live && (
                 <>
-                    <div className="bg-o-red text-o-white absolute bottom-6 left-4 w-fit rounded-sm px-2 py-1 text-xs uppercase">
+                    <div className="absolute bottom-6 left-4 w-fit rounded-sm bg-o-red px-2 py-1 text-xs font-semibold uppercase text-o-white">
                         Live
                     </div>
 
                     {timeInfo && (
-                        <div className="text-o-white bg-o-background/80 absolute bottom-6 right-4 w-fit rounded-sm px-2 py-1 text-base font-medium uppercase">
+                        <div className="absolute bottom-6 right-4 w-fit rounded-sm bg-o-background/80 px-2 py-1 text-base font-medium uppercase text-o-white">
                             {timeInfo}
                         </div>
                     )}
