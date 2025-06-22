@@ -80,7 +80,7 @@ export function Content({ prData }: ContentProps) {
                     image: "IMAGE",
                 },
                 {
-                    title: "Click 'Start Shopping' button and make sure it works",
+                    title: "Click 'Start Shopping' button and make sure it works. Do not navigate further. If successful, tasks are all finished.",
                     image: "IMAGE",
                 },
             ],
@@ -104,7 +104,7 @@ export function Content({ prData }: ContentProps) {
                     image: "IMAGE",
                 },
                 {
-                    title: "Change the preview image on the left to the second one by clicking the selector on the bottom",
+                    title: "Change the preview image on the left to the second one by clicking the selector on the bottom. Do not navigate further. If successful, tasks are all finished.",
                     image: "IMAGE",
                 },
             ],
@@ -120,7 +120,7 @@ export function Content({ prData }: ContentProps) {
                     image: "IMAGE",
                 },
                 {
-                    title: "Increase quantity to 5, do not add to cart",
+                    title: "Increase quantity to 2, do not add to cart, do not navigate further. If successful, tasks are all finished.",
                     image: "IMAGE",
                 },
             ],
