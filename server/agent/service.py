@@ -67,6 +67,9 @@ class AgentService:
           
         # Launch browser with same options as stream.py (except headless for now)
         self.session = BrowserSession(  # type: ignore
+            window_size={"width": W, "height": H},  # type: ignore
+            viewport={"width": W, "height": H},  # type: ignore
+            no_viewport=False,  # type: ignore
             viewport_expansion=-1,  # type: ignore
             highlight_elements=True,  # type: ignore
             headless=False,  # type: ignore
@@ -169,12 +172,16 @@ class Recorder:
         asyncio.create_task(self._capture_loop())
     async def stop(self):
         self.running = False
-        if self.proc:
-            try:
-                self.proc.stdin.close()  # type: ignore
-                self.proc.wait(timeout=3)
-            except Exception:
-                self.proc.kill()
+        proc = self.proc
+        if proc is None:
+            return
+        stdin = proc.stdin
+        if stdin is not None:
+            stdin.close()
+        try:
+            proc.wait(timeout=3)
+        except Exception:
+            proc.kill()
     def _spawn_ffmpeg(self):
         seg_url = f"http://{HOST}:{PORT}/stream/{self.run_id}/segments/seg%09d.ts"
         pl_url = f"http://{HOST}:{PORT}/stream/{self.run_id}/playlist.m3u8"
@@ -213,13 +220,16 @@ class Recorder:
             jpeg = await self.page.screenshot(type="jpeg", quality=75)
             rgb = np.asarray(
                 Image.open(io.BytesIO(jpeg))
-                     .resize((W, H), Image.LANCZOS)  # type: ignore
+                     .resize((W, H), Image.Resampling.LANCZOS)  # type: ignore
                      .convert("RGB"),
                 np.uint8,
             )
             self.latest_frame = rgb
+            proc = self.proc
+            if proc is None or proc.stdin is None:
+                break
             try:
-                self.proc.stdin.write(rgb.tobytes())  # type: ignore
+                proc.stdin.write(rgb.tobytes())
             except BrokenPipeError:
                 break
             elapsed = time.perf_counter() - t0
@@ -246,7 +256,6 @@ class VideoAgentService(AgentService):
     async def _prepare_page(self):
         # navigate to test page and set viewport
         page = await self.session.get_current_page()
-        await page.set_viewport_size({"width": W, "height": H})
         await page.goto("https://example.com")
     def __init__(self, run_id: str):
         self.run_id = run_id
