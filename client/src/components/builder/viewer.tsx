@@ -171,13 +171,13 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
     return (
         <ResizablePanelGroup
             direction="vertical"
-            className="text-o-white flex w-full flex-col"
+            className="flex w-full flex-col text-o-white"
         >
             <ResizablePanel
-                className="bg-o-background aspect-video w-full"
+                className="aspect-video w-full bg-o-background"
                 defaultSize={65}
             >
-                <div className="flex flex-row items-center justify-between px-4 py-3 font-medium">
+                <div className="flex flex-row items-center justify-between px-4 py-3 text-sm font-medium">
                     <span className="w-24 truncate leading-none">Demo</span>
 
                     <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
@@ -185,7 +185,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                     </span>
 
                     <div
-                        className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
+                        className="w-24 cursor-pointer text-right leading-none text-o-primary underline underline-offset-2 hover:bg-inherit hover:text-o-primary/80"
                         onClick={() =>
                             setMode((prev) =>
                                 prev === "live" ? "dvr" : "live"
@@ -209,7 +209,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
             </ResizablePanel>
 
             <ResizableHandle
-                className="bg-o-outline min-h-1"
+                className="min-h-1 bg-o-outline"
                 withHandle
             />
 
@@ -224,19 +224,19 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                     }
                     className="h-full"
                 >
-                    <TabsList className="bg-o-background h-fit w-full justify-start rounded-none p-0">
+                    <TabsList className="h-fit w-full justify-start rounded-none bg-o-background p-0">
                         <TabsTrigger
                             value="github"
                             asChild
-                            className="data-[state=active]:bg-o-base-background border-o-background box-border rounded-none border-r"
+                            className="box-border rounded-none border-r border-o-background data-[state=active]:bg-o-base-background"
                         >
-                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                                <span className="text-o-white text-xs font-medium leading-none">
+                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
+                                <span className="text-xs font-medium leading-none text-o-white">
                                     Github
                                 </span>
                                 <div
                                     className={cn(
-                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
+                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
                                         activeTab === "github" && "visible"
                                     )}
                                 />
@@ -246,16 +246,16 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         <TabsTrigger
                             value="logs"
                             asChild
-                            className="data-[state=active]:bg-o-base-background rounded-none"
+                            className="rounded-none data-[state=active]:bg-o-base-background"
                             disabled={!activeTest}
                         >
-                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                                <span className="text-o-white text-xs font-medium leading-none">
+                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
+                                <span className="text-xs font-medium leading-none text-o-white">
                                     Agent Logs
                                 </span>
                                 <div
                                     className={cn(
-                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
+                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
                                         activeTab === "logs" && "visible"
                                     )}
                                 />
@@ -265,13 +265,24 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
 
                     <TabsContent
                         value="github"
-                        className="mt-0"
+                        className="mt-0 h-full"
                     >
-                        <div className="border-o-background bg-o-base-background box-border flex-col space-y-2 border-b-2 border-t-2 p-4">
+                        <div className="box-border flex-col space-y-2 border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
                             <div className="flex w-full items-center justify-between">
                                 <span className="font-medium">{title}</span>
-                                <div>
-                                    <span>Add Diff Here</span>
+                                <div className="flex items-center gap-[2px]">
+                                    <span className="text-sm font-medium text-o-green">
+                                        +1,139
+                                    </span>
+                                    <span className="text-sm font-medium text-o-red">
+                                        -571
+                                    </span>
+                                    <div className="w-1" />
+                                    <div className="h-[10px] w-[10px] bg-o-green" />
+                                    <div className="h-[10px] w-[10px] bg-o-green" />
+                                    <div className="h-[10px] w-[10px] bg-o-green" />
+                                    <div className="h-[10px] w-[10px] bg-o-red" />
+                                    <div className="box-border h-[10px] w-[10px] border-[1.5px] border-o-muted-medium" />
                                 </div>
                             </div>
                             <div className="flex w-full items-center justify-between">
@@ -289,27 +300,29 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                                         type="branch"
                                     />
                                 </div>
-                                <div className="text-o-muted flex items-center gap-2 text-sm">
+                                <div className="flex items-center gap-2 text-sm text-o-muted">
                                     <span>{comments.length}</span>
                                     <MessagesSquareIcon size={14} />
                                 </div>
                             </div>
                         </div>
-                        <div className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-4">
-                            {comments.map((comment) => (
-                                <CommentCard
-                                    key={comment.id}
-                                    comment={comment}
-                                />
-                            ))}
-                        </div>
+                        <ScrollArea className="h-[calc(100%-100px)]">
+                            <div className="flex flex-col gap-4 px-4 py-4">
+                                {comments.map((comment) => (
+                                    <CommentCard
+                                        key={comment.id}
+                                        comment={comment}
+                                    />
+                                ))}
+                            </div>
+                        </ScrollArea>
                     </TabsContent>
 
                     <TabsContent
                         value="logs"
                         className="mt-0 h-full"
                     >
-                        <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
+                        <div className="box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
                             {eventData?.length ? (
                                 <ScrollArea ref={scrollAreaRef}>
                                     {eventData.map((event, index) => {
@@ -336,7 +349,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                                     })}
                                 </ScrollArea>
                             ) : (
-                                <div className="text-o-primary my-auto flex h-full items-center justify-center">
+                                <div className="my-auto flex h-full items-center justify-center text-o-primary">
                                     Agent logs will display here.
                                 </div>
                             )}
