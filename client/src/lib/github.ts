@@ -67,7 +67,7 @@ export interface GitHubReviewComment {
     original_line: number | null;
 }
 
-export interface PRWithComments {
+export interface PRData {
     pr: GitHubPR;
     comments: GitHubComment[];
     reviews: GitHubReview[];
@@ -225,11 +225,11 @@ export async function getPRReviewComments(
     return response.json();
 }
 
-export async function getPRWithComments(
+export async function getPRData(
     accessToken: string,
     repo: string,
     prNumber: number
-): Promise<PRWithComments> {
+): Promise<PRData> {
     const [pr, comments, reviews, reviewComments] = await Promise.all([
         getPRDetails(accessToken, repo, prNumber),
         getPRComments(accessToken, repo, prNumber),

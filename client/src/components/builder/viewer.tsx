@@ -7,7 +7,7 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { PRWithComments } from "@/lib/github";
+import { PRData } from "@/lib/github";
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
 
 // Sample comment data (fallback when no PR data)
@@ -51,38 +51,41 @@ const sampleComments = [
 ];
 
 interface ViewerProps {
-    prWithComments?: PRWithComments | null;
+    prData?: PRData | null;
 }
 
-export function Viewer({ prWithComments }: ViewerProps) {
-    // Use PR data if available, otherwise fall back to sample data
-    const title = prWithComments
-        ? `${prWithComments.pr.title} #${prWithComments.pr.number}`
-        : "feat: implement Google Calendar event overlay #177";
+export function Viewer({ prData }: ViewerProps) {
+    const title = prData ? (
+        <>
+            {prData.pr.title}{" "}
+            <span className="text-o-muted">#{prData.pr.number}</span>
+        </>
+    ) : (
+        "feat: implement Google Calendar event overlay #177"
+    );
 
-    const baseBranch = prWithComments?.pr.base.ref || "main";
-    const headBranch =
-        prWithComments?.pr.head.ref || "174-fetch-google-calendar-data";
+    const baseBranch = prData?.pr.base.ref || "main";
+    const headBranch = prData?.pr.head.ref || "174-fetch-google-calendar-data";
 
     // Combine all comments into a timeline sorted by date
-    const comments = prWithComments
+    const comments = prData
         ? (() => {
               const allComments = [];
 
               // Add PR body as first comment
-              if (prWithComments.pr.body) {
+              if (prData.pr.body) {
                   allComments.push({
-                      id: `pr-body-${prWithComments.pr.id}`,
-                      username: prWithComments.pr.user.login,
-                      content: prWithComments.pr.body,
-                      avatar_url: prWithComments.pr.user.avatar_url,
-                      created_at: prWithComments.pr.created_at,
+                      id: `pr-body-${prData.pr.id}`,
+                      username: prData.pr.user.login,
+                      content: prData.pr.body,
+                      avatar_url: prData.pr.user.avatar_url,
+                      created_at: prData.pr.created_at,
                       type: "description",
                   });
               }
 
               // Add general comments
-              prWithComments.comments.forEach((comment) => {
+              prData.comments.forEach((comment) => {
                   allComments.push({
                       id: `comment-${comment.id}`,
                       username: comment.user.login,
@@ -94,7 +97,7 @@ export function Viewer({ prWithComments }: ViewerProps) {
               });
 
               // Add reviews
-              prWithComments.reviews.forEach((review) => {
+              prData.reviews.forEach((review) => {
                   if (review.body) {
                       const reviewStateEmoji = {
                           APPROVED: "✅",
@@ -114,7 +117,7 @@ export function Viewer({ prWithComments }: ViewerProps) {
               });
 
               // Add review comments (inline code comments)
-              prWithComments.reviewComments.forEach((reviewComment) => {
+              prData.reviewComments.forEach((reviewComment) => {
                   allComments.push({
                       id: `review-comment-${reviewComment.id}`,
                       username: reviewComment.user.login,

@@ -1,6 +1,6 @@
 import { Content } from "@/components/content";
 import { authOptions } from "@/lib/auth";
-import { getPRWithComments } from "@/lib/github";
+import { getPRData } from "@/lib/github";
 import { getServerSession } from "next-auth";
 
 interface PageProps {
@@ -12,13 +12,13 @@ interface PageProps {
 
 export default async function Page({ searchParams }: PageProps) {
     const params = await searchParams;
-    let prWithComments = null;
+    let prData = null;
 
     if (params.repo && params.pr) {
         try {
             const session = await getServerSession(authOptions);
             if (session?.accessToken) {
-                prWithComments = await getPRWithComments(
+                prData = await getPRData(
                     session.accessToken,
                     params.repo,
                     parseInt(params.pr)
@@ -29,5 +29,5 @@ export default async function Page({ searchParams }: PageProps) {
         }
     }
 
-    return <Content prWithComments={prWithComments} />;
+    return <Content prData={prData} />;
 }

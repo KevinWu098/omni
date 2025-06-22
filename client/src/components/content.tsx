@@ -6,7 +6,7 @@ import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
 import { RunnerSidebar } from "@/components/runner/runner-sidebar";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
-import { PRWithComments } from "@/lib/github";
+import { PRData } from "@/lib/github";
 import { useQueryState } from "nuqs";
 
 export type Step = {
@@ -21,10 +21,10 @@ export type Test = {
 };
 
 interface ContentProps {
-    prWithComments?: PRWithComments | null;
+    prData?: PRData | null;
 }
 
-export function Content({ prWithComments }: ContentProps) {
+export function Content({ prData }: ContentProps) {
     const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
         "mode",
         {
@@ -81,7 +81,7 @@ export function Content({ prWithComments }: ContentProps) {
                 />
             </SidebarWrapper>
 
-            <Viewer prWithComments={prWithComments} />
+            <Viewer prData={prData} />
 
             <SidebarWrapper
                 title="Summary"
