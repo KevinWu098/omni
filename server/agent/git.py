@@ -14,8 +14,8 @@ dotenv.load_dotenv()
 GITHUB_TOKEN = os.getenv('GITHUB_API_KEY')
 REPOS_DIR = Path('repos')
 
-def clone_repo(repo_url, destination=None):
-    """Clone repository using git"""
+def clone_repo(repo_url, destination=None, branch=None):
+    """Clone repository using git, optionally from a specific branch"""
     if not destination:
         repo_name = repo_url.split('/')[-1].replace('.git', '')
         destination = REPOS_DIR / repo_name
@@ -25,7 +25,13 @@ def clone_repo(repo_url, destination=None):
         return str(destination)
 
     auth_url = repo_url.replace('https://', f'https://{GITHUB_TOKEN}@')
+    
+    # Build clone command with optional branch
     cmd = ['git', 'clone', auth_url, str(destination)]
+    if branch:
+        cmd.extend(['--branch', branch])
+        print(f"🌿 Cloning branch: {branch}")
+    
     result = subprocess.run(cmd, capture_output=True, text=True)
 
     if result.returncode == 0:

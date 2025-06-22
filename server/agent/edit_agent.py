@@ -54,7 +54,7 @@ def cleanup_repo(repo_path):
         return False
 
 
-def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, progress_callback=None):
+def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, progress_callback=None, source_branch=None, target_branch=None):
     """
     Pull a repository, edit it using AI agent, and create a PR
     
@@ -65,6 +65,8 @@ def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, pro
         pr_title (str): Custom PR title (if None, AI will generate one)
         pr_body (str): Custom PR body (if None, AI will generate one)
         progress_callback (callable): Optional callback function for progress updates
+        source_branch (str): Branch to clone from (default: main/master)
+        target_branch (str): Branch to create PR against (default: main)
     
     Returns:
         dict: Result containing success status, PR URL, and other metadata
@@ -83,8 +85,12 @@ def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, pro
     REPOS_DIR.mkdir(exist_ok=True)
     
     # Clone repository
-    log_progress("📥 Cloning repository...", "clone")
-    repo_path = clone_repo(git_url)
+    if source_branch:
+        log_progress(f"📥 Cloning repository from branch: {source_branch}...", "clone")
+    else:
+        log_progress("📥 Cloning repository...", "clone")
+    
+    repo_path = clone_repo(git_url, branch=source_branch)
     if not repo_path:
         return {
             "success": False,
@@ -133,8 +139,12 @@ def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, pro
                     pr_body = f"This PR was created by an AI agent.\n\nPrompt used: {prompt}"
         
         # Make PR with the metadata
-        log_progress("📤 Creating pull request...", "pr_create")
-        pr_url = make_pr(repo_path, pr_title, body=pr_body)
+        if target_branch:
+            log_progress(f"📤 Creating pull request against {target_branch}...", "pr_create")
+        else:
+            log_progress("📤 Creating pull request...", "pr_create")
+        
+        pr_url = make_pr(repo_path, pr_title, body=pr_body, base=target_branch or 'main')
         
         if pr_url:
             log_progress("🎉 PR created successfully!", "pr_success")
@@ -178,7 +188,7 @@ def pull_edit_pr(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, pro
         }
 
 
-def pull_edit_pr_streaming(prompt, git_url, cleanup=True, pr_title=None, pr_body=None):
+def pull_edit_pr_streaming(prompt, git_url, cleanup=True, pr_title=None, pr_body=None, source_branch=None, target_branch=None):
     """
     Streaming version of pull_edit_pr that yields progress updates
     
@@ -188,6 +198,8 @@ def pull_edit_pr_streaming(prompt, git_url, cleanup=True, pr_title=None, pr_body
         cleanup (bool): Whether to clean up the repo folder after creating PR (default: True)
         pr_title (str): Custom PR title (if None, AI will generate one)
         pr_body (str): Custom PR body (if None, AI will generate one)
+        source_branch (str): Branch to clone from (default: main/master)
+        target_branch (str): Branch to create PR against (default: main)
     
     Yields:
         str: Server-sent event formatted progress updates
@@ -212,8 +224,12 @@ def pull_edit_pr_streaming(prompt, git_url, cleanup=True, pr_title=None, pr_body
         REPOS_DIR.mkdir(exist_ok=True)
         
         # Clone repository
-        yield stream_progress("📥 Cloning repository...", "clone")
-        repo_path = clone_repo(git_url)
+        if source_branch:
+            yield stream_progress(f"📥 Cloning repository from branch: {source_branch}...", "clone")
+        else:
+            yield stream_progress("📥 Cloning repository...", "clone")
+        
+        repo_path = clone_repo(git_url, branch=source_branch)
         if not repo_path:
             yield stream_progress("❌ Failed to clone repository", "error", "error")
             return
@@ -255,8 +271,12 @@ def pull_edit_pr_streaming(prompt, git_url, cleanup=True, pr_title=None, pr_body
                     pr_body = f"This PR was created by an AI agent.\n\nPrompt used: {prompt}"
         
         # Make PR with the metadata
-        yield stream_progress("📤 Creating pull request...", "pr_create")
-        pr_url = make_pr(repo_path, pr_title, body=pr_body)
+        if target_branch:
+            yield stream_progress(f"📤 Creating pull request against {target_branch}...", "pr_create")
+        else:
+            yield stream_progress("📤 Creating pull request...", "pr_create")
+        
+        pr_url = make_pr(repo_path, pr_title, body=pr_body, base=target_branch or 'main')
         
         if pr_url:
             yield stream_progress("🎉 PR created successfully!", "pr_success")
