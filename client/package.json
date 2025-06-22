@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@radix-ui/react-collapsible": "^1.1.11",
     "@radix-ui/react-scroll-area": "^1.2.9",
     "@radix-ui/react-select": "^2.2.5",
@@ -19,7 +20,10 @@
     "@types/hls.js": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "gsap": "^3.13.0",
+    "gsap-trial": "^3.13.0",
     "hls.js": "^1.6.5",
+    "locomotive-scroll": "5.0.0-beta.21",
     "lucide-react": "^0.522.0",
     "motion": "^12.18.1",
     "next": "15.3.4",
