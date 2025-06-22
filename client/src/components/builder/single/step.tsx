@@ -94,12 +94,6 @@ export function Step({
                         </Button>
                     </div>
                 )}
-
-                {step.image && (
-                    <div className="mt-1 flex items-center justify-center rounded-md border border-o-outline text-sm">
-                        {step.image}
-                    </div>
-                )}
             </CollapsibleContent>
         </Collapsible>
     );
