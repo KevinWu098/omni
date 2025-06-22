@@ -111,13 +111,13 @@ export function Content({ prData }: ContentProps) {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     const handleRunTest = () => {
-        const commands = activeTest?.steps.map((step) => step.title);
+        const commands = activeTest?.steps.map((step) => step.title ?? "");
         if (!commands?.length) {
             toast.warning("No commands to run");
             return;
         }
 
-        sendCommand(commands?.join("\n"), defaultRunId);
+        sendCommand(commands, undefined);
     };
 
     return (
@@ -205,7 +205,7 @@ export function Content({ prData }: ContentProps) {
                         <motion.div
                             key="test-runner-sidebar"
                             className="h-full"
-                            // initial={{ x: 300, opacity: 0 }}
+                            initial={{ x: 300, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: 300, opacity: 0 }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
