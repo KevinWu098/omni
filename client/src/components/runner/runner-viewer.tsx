@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Chip } from "@/components/chip";
 import { CommentCard } from "@/components/comment-card";
 import { Timeline } from "@/components/timeline";
+import { Button } from "@/components/ui/button";
 import {
     ResizableHandle,
     ResizablePanel,
@@ -35,25 +36,43 @@ export function RunnerViewer({ eventData, runId }: ViewerProps) {
         }
     }, [activeTab, eventData?.length]);
 
+    const [mode, setMode] = useState<"live" | "dvr">("live");
+
     return (
         <ResizablePanelGroup
             direction="vertical"
             className="text-o-white flex w-full flex-col"
         >
             <ResizablePanel
-                className="bg-o-muted aspect-video w-full"
+                className="bg-o-background aspect-video w-full"
                 defaultSize={65}
             >
-                <div className="flex flex-row items-center justify-between px-4 py-2 font-medium">
-                    <span className="leading-none">Demo</span>
-                    <span className="leading-none">
+                <div className="flex flex-row items-center justify-between px-4 py-3 font-medium">
+                    <span className="w-24 truncate leading-none">
+                        All Agents
+                    </span>
+
+                    <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
                         https://staging-1720.scikit-learn.com/
                     </span>
-                    <span className="invisible leading-none">Demo</span>
+
+                    <div
+                        className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
+                        onClick={() =>
+                            setMode((prev) =>
+                                prev === "live" ? "dvr" : "live"
+                            )
+                        }
+                    >
+                        {mode === "live" ? "DVR" : "Live"}
+                    </div>
                 </div>
 
                 {runId ? (
-                    <VideoPlayer runId={runId} />
+                    <VideoPlayer
+                        mode={mode}
+                        runId={runId}
+                    />
                 ) : (
                     <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
                         No run ID
