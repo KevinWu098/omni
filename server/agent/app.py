@@ -11,9 +11,11 @@ from service import VideoAgentService
 from flask_cors import CORS
 
 from edit_agent import pull_edit_pr_streaming
+from collections import defaultdict
 
 # Mapping from run IDs to VideoAgentService instances
 agents = {}
+logs = defaultdict(list)
 
 load_dotenv()
 
@@ -25,6 +27,9 @@ CORS(app)
 def diag():
     return jsonify({"agents": list(agents.keys())})
 
+@app.route("/agent_logs/<run_id>", methods=["GET"])
+def agent_logs(run_id):
+    return jsonify(logs[run_id])
 
 @app.route("/run_command", methods=["POST"])
 def run_command():
@@ -74,6 +79,8 @@ def run_command():
             asyncio.run_coroutine_threadsafe(service.recorder.start(), service.loop).result()
             # Stream logs and results
             for log_data in service.run_command_streaming(commands):
+                if (log_data != "data: {'type': 'keepalive'}\n\n"):
+                    logs[run_id].append(log_data)
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
