@@ -1,4 +1,5 @@
-import { TestCard, type Test } from "@/components/ui/builder/test-card";
+import { type Test } from "@/components/ui/builder/content";
+import { TestCard } from "@/components/ui/builder/test-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,27 +11,11 @@ import {
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
 
-const TEST_CARDS: Test[] = [
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-];
-
 export function AllSidePanel({
+    tests,
     handleTestClick,
 }: {
+    tests: Test[];
     handleTestClick: (test: Test) => void;
 }) {
     return (
@@ -68,7 +53,7 @@ export function AllSidePanel({
             </div>
 
             <div className="flex flex-1 flex-col">
-                {TEST_CARDS.map((testCard, index) => (
+                {tests.map((testCard, index) => (
                     <TestCard
                         key={index}
                         {...testCard}

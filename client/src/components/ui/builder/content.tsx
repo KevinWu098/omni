@@ -2,18 +2,68 @@
 
 import { useState } from "react";
 import { AllSidePanel } from "@/components/ui/builder/all-side-panel";
+import { SingleSidePanel } from "@/components/ui/builder/single/single-side-panel";
 import { Step } from "@/components/ui/builder/single/step";
-import { TestCard, type Test } from "@/components/ui/builder/test-card";
 import { Viewer } from "@/components/ui/builder/viewer";
-import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+
+export type Step = {
+    title: string | null;
+    image: string | null;
+};
+export type Test = {
+    id: string;
+    title: string;
+    steps: Step[];
+    status: string;
+};
 
 export function Content() {
+    const [tests, setTests] = useState<Test[]>([
+        {
+            id: "aa",
+            title: "Navigate to .parse() documentation",
+            steps: [
+                {
+                    title: "Navigate to .parse() documentation",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Click first heading",
+                    image: "IMAGE",
+                },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "sdfsfsf",
+            title: "Navigate to .parse() documentation",
+            steps: [
+                {
+                    title: "Navigate to .parse() documentation",
+                    image: "IMAGE",
+                },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "fasdfasdfdsa",
+            title: "Navigate to .parse() documentation",
+            steps: [
+                {
+                    title: "Navigate to .parse() documentation",
+                    image: "IMAGE",
+                },
+            ],
+            status: "enabled",
+        },
+    ]);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
 
     const handleTestClick = (test: Test) => {
         setSelectedTest(test);
     };
+
+    const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     return (
         <div className="bg-o-background flex h-full flex-row">
@@ -26,39 +76,18 @@ export function Content() {
                 </div>
 
                 <div className="bg-o-base-background text-o-white box-border flex h-[calc(100%-30px)] flex-col border-r-2 border-t-2 border-[#141414]">
-                    {selectedTest ? (
-                        <>
-                            <TestCard
-                                {...selectedTest}
-                                handleTestClick={null}
-                            />
-
-                            <div className="border-o-background flex max-h-[calc(100%-200px)] grow flex-col gap-y-4 border-t p-4">
-                                <div className="flex flex-col gap-y-4 overflow-y-auto">
-                                    <Step />
-                                    <Step />
-                                </div>
-
-                                <div className="border-outline border-o-muted-dark hover:border-o-muted group flex w-full justify-center rounded-md border border-dashed p-2 hover:cursor-pointer">
-                                    <PlusIcon className="text-o-muted group-hover:text-o-muted-light size-4" />
-                                </div>
-                            </div>
-
-                            <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row justify-end rounded-md p-2 ring-1">
-                                <div className="flex flex-row gap-x-2">
-                                    <Button
-                                        variant={"ghost"}
-                                        className="hover:bg-inherit hover:text-inherit"
-                                        onClick={() => setSelectedTest(null)}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button variant={"default"}>Save</Button>
-                                </div>
-                            </div>
-                        </>
+                    {activeTest ? (
+                        <SingleSidePanel
+                            activeTest={activeTest}
+                            tests={tests}
+                            setTests={setTests}
+                            setSelectedTest={setSelectedTest}
+                        />
                     ) : (
-                        <AllSidePanel handleTestClick={handleTestClick} />
+                        <AllSidePanel
+                            tests={tests}
+                            handleTestClick={handleTestClick}
+                        />
                     )}
                 </div>
             </div>
