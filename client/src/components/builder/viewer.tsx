@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Video } from "@/components/ui/video";
 import { PRData } from "@/lib/github";
 import { EventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
@@ -60,9 +61,10 @@ interface ViewerProps {
     prData?: PRData | null;
     eventData?: EventData[];
     activeTest: Test | undefined;
+    runId: string | null;
 }
 
-export function Viewer({ prData, eventData, activeTest }: ViewerProps) {
+export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
     const [activeTab, setActiveTab] = useState<"github" | "logs">("github");
 
     const title = prData ? (
@@ -150,7 +152,6 @@ export function Viewer({ prData, eventData, activeTest }: ViewerProps) {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        console.log("scrolling");
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollIntoView({
                 behavior: "smooth",
@@ -159,20 +160,33 @@ export function Viewer({ prData, eventData, activeTest }: ViewerProps) {
         }
     }, [activeTab, eventData?.length]);
 
+    useEffect(() => {
+        if (runId) {
+            setActiveTab("logs");
+        }
+    }, [runId]);
+
     return (
         <ResizablePanelGroup
             direction="vertical"
             className="text-o-white flex w-full flex-col"
         >
             <ResizablePanel className="bg-o-muted aspect-video w-full">
-                <div className="flex flex-row items-center justify-between p-4 font-medium">
+                <div className="flex flex-row items-center justify-between px-4 py-2 font-medium">
                     <span className="leading-none">Demo</span>
                     <span className="leading-none">
                         https://staging-1720.scikit-learn.com/
                     </span>
                     <span className="invisible leading-none">Demo</span>
                 </div>
-                DISPLAY
+
+                {runId ? (
+                    <Video runId={runId} />
+                ) : (
+                    <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
+                        No run ID
+                    </div>
+                )}
             </ResizablePanel>
 
             <ResizableHandle
@@ -182,7 +196,7 @@ export function Viewer({ prData, eventData, activeTest }: ViewerProps) {
 
             <ResizablePanel className="bg-o-base-foreground">
                 <Tabs
-                    defaultValue="github"
+                    value={activeTab}
                     onValueChange={(value) =>
                         setActiveTab(value as "github" | "logs")
                     }
