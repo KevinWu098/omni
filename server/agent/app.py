@@ -4,6 +4,7 @@ import json
 from uuid import uuid4
 
 from service import AgentService
+from flask_cors import CORS
 
 # Mapping from run IDs to AgentService instances
 agents = {}
@@ -11,7 +12,7 @@ agents = {}
 load_dotenv()
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route("/run_command", methods=["POST"])
 def run_command():
