@@ -1,3 +1,4 @@
+import { BigText } from "@/components/big-text";
 import { TestCard } from "@/components/builder/test-card";
 import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
@@ -46,14 +47,14 @@ export function AllSidePanel({
         <>
             <div className="flex flex-col gap-y-4 p-4 pt-6">
                 <div className="flex flex-row gap-10">
-                    <div className="flex flex-col font-medium">
-                        <span className="text-xs">Total Tests</span>
-                        <span className="text-3xl">27</span>
-                    </div>
-                    <div className="flex flex-col font-medium">
-                        <span className="text-xs">Total Tests</span>
-                        <span className="text-3xl">27</span>
-                    </div>
+                    <BigText
+                        label="Total Tests"
+                        value="27"
+                    />
+                    <BigText
+                        label="Total Tests"
+                        value="27"
+                    />
                 </div>
 
                 <div className="flex flex-col gap-y-2">
