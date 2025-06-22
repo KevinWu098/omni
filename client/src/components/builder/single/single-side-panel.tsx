@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { type Test } from "@/components/builder/content";
 import { Step } from "@/components/builder/single/step";
 import { TestCard } from "@/components/builder/test-card";
+import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";

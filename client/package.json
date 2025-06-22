@@ -20,6 +20,7 @@
     "motion": "^12.18.1",
     "next": "15.3.4",
     "next-auth": "^4.24.11",
+    "nuqs": "^2.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-resizable-panels": "^3.0.3",

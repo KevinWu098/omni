@@ -1,5 +1,5 @@
-import { type Test } from "@/components/builder/content";
 import { TestCard } from "@/components/builder/test-card";
+import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";

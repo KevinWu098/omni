@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { AllSidePanel } from "@/components/builder/all-side-panel";
+import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { SingleSidePanel } from "@/components/builder/single/single-side-panel";
 import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
+import { RunnerSidebar } from "@/components/runner/runner-sidebar";
+import { SidebarWrapper } from "@/components/sidebar-wrapper";
+import { useQueryState } from "nuqs";
 
 export type Step = {
     title: string | null;
@@ -18,6 +22,16 @@ export type Test = {
 };
 
 export function Content() {
+    const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
+        "mode",
+        {
+            defaultValue: "test-builder",
+            parse: (value: unknown): "test-builder" | "test-runner" => {
+                return value === "test-runner" ? "test-runner" : "test-builder";
+            },
+        }
+    );
+
     const [tests, setTests] = useState<Test[]>([
         {
             id: "aa",
@@ -48,41 +62,30 @@ export function Content() {
     ]);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
 
-    const handleTestClick = (test: Test) => {
-        setSelectedTest(test);
-    };
-
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     return (
         <div className="bg-o-background flex h-full flex-row">
-            <div className="border-o-background relative w-[400px] min-w-[400px]">
-                <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                    <span className="text-o-white text-xs font-medium leading-none">
-                        Test Suite
-                    </span>
-                    <div className="bg-o-primary absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2" />
-                </div>
-
-                <div className="bg-o-base-background text-o-white box-border flex h-[calc(100%-30px)] flex-col border-r-2 border-t-2 border-[#141414]">
-                    {activeTest ? (
-                        <SingleSidePanel
-                            activeTest={activeTest}
-                            tests={tests}
-                            setTests={setTests}
-                            setSelectedTest={setSelectedTest}
-                        />
-                    ) : (
-                        <AllSidePanel
-                            tests={tests}
-                            handleTestClick={handleTestClick}
-                            setTests={setTests}
-                        />
-                    )}
-                </div>
-            </div>
+            <SidebarWrapper
+                title="Test Suite"
+                show={activeSidebar === "test-builder"}
+            >
+                <BuilderSidebar
+                    activeTest={activeTest}
+                    tests={tests}
+                    setTests={setTests}
+                    setSelectedTest={setSelectedTest}
+                />
+            </SidebarWrapper>
 
             <Viewer />
+
+            <SidebarWrapper
+                title="Summary"
+                show={activeSidebar === "test-runner"}
+            >
+                <RunnerSidebar />
+            </SidebarWrapper>
         </div>
     );
 }
