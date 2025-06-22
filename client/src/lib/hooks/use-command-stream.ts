@@ -6,6 +6,7 @@ export type EventData = {
     type: string;
     content: string;
     streamId?: string;
+    timeStamp: number;
 };
 
 export type StreamsEventData = {
@@ -82,9 +83,9 @@ export function useCommandStream({
                             type: typeMatch[1],
                             content: contentMatch[1],
                             streamId,
+                            timeStamp: Date.now(),
                         };
 
-                        console.log("NEW DATA", streamId, eventData);
                         setEventData((prev) => ({
                             ...prev,
                             [streamId]: [...(prev[streamId] || []), eventData],

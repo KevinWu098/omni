@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Test } from "@/components/content";
 import { Timeline } from "@/components/timeline";
 import {
     ResizableHandle,
@@ -12,13 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoPlayer } from "@/components/ui/video";
 import { useCommandStream } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
-import {
-    ArrowLeftIcon,
-    ChevronDownIcon,
-    MessagesSquareIcon,
-} from "lucide-react";
+import { ChevronDownIcon, Loader2Icon } from "lucide-react";
 
-export function RunnerViewer() {
+export function RunnerViewer({ tests }: { tests: Test[] }) {
     const [runIds, setRunIds] = useState<string[]>([]);
     const { eventData, sendCommand } = useCommandStream({
         setRunId: (runId) => {
@@ -26,10 +23,7 @@ export function RunnerViewer() {
         },
     });
 
-    console.log("data", eventData);
-    console.log("runIds", runIds);
-
-    const [activeTab, setActiveTab] = useState<"timeline" | "logs">("timeline");
+    const [activeTab, setActiveTab] = useState<"timeline" | "logs">("logs");
     const [selectedStreamId, setSelectedStreamId] = useState<string>("0");
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -45,26 +39,31 @@ export function RunnerViewer() {
 
     const [mode, setMode] = useState<"live" | "dvr">("live");
 
-    // Function to start all streams
+    // Function to start all streams with slight delay between each
     const startAllStreams = async () => {
-        await Promise.all(
-            Array.from({ length: 2 }, (_, i) => {
-                const streamId = i.toString();
-                // Start each stream independently without waiting for others
-                return sendCommand(
-                    [
-                        "Navigate to peterportal.org",
-                        "Press the x on the pop-up, only if there is one",
-                        "Click on the 'Professors' tab",
-                        "Search for professor 'Shindler'",
-                        "Click on Shindler's name",
-                        "Scroll down to the first Review",
-                    ],
-                    undefined,
-                    streamId
-                );
-            })
-        );
+        const streams = Array.from({ length: 4 }, (_, i) => {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const test = tests.at(i % 4);
+                    if (test) {
+                        sendCommand(
+                            [
+                                "Navigate to " + test.url,
+                                ...test.steps.map(
+                                    (step) => step.title as string
+                                ),
+                            ],
+                            undefined,
+                            i.toString()
+                        ).then(resolve);
+                    } else {
+                        resolve(undefined);
+                    }
+                }, 0);
+            });
+        });
+
+        await Promise.all(streams);
     };
 
     useEffect(() => {
@@ -108,13 +107,13 @@ export function RunnerViewer() {
                 />
 
                 {runIds.length ? (
-                    <div className="grid max-h-[calc(100%-32px)] grid-cols-4 grid-rows-4 gap-1 p-4">
+                    <div className="grid max-h-[calc(100%-32px)] grid-cols-2 grid-rows-2 gap-1 p-4">
                         {runIds.map((runId) => (
                             <div
                                 key={runId}
                                 onClick={() => setSelectedStreamId(runId)}
                                 className={cn(
-                                    "w-fit cursor-pointer",
+                                    "mx-auto flex w-fit cursor-pointer items-center justify-center",
                                     selectedStreamId === runId &&
                                         "ring-2 ring-o-primary"
                                 )}
@@ -128,8 +127,11 @@ export function RunnerViewer() {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
-                        No run ID
+                    <div className="flex h-[calc(100%-32px)] w-full items-center justify-center gap-x-2">
+                        <span className="text-xl font-semibold">
+                            Initializing Agents
+                        </span>
+                        <Loader2Icon className="text-o-primary size-6 animate-spin duration-500" />
                     </div>
                 )}
             </ResizablePanel>
@@ -240,64 +242,72 @@ export function RunnerViewer() {
                                     </TabsList>
 
                                     <div className="flex-1 overflow-auto">
-                                        {Object.entries(eventData).map(
-                                            ([streamId, events]) => (
-                                                <TabsContent
-                                                    key={streamId}
-                                                    value={streamId}
-                                                    className="mt-0 h-full p-4"
-                                                >
-                                                    {events.length ? (
-                                                        <ScrollArea
-                                                            ref={scrollAreaRef}
-                                                        >
-                                                            {events.map(
-                                                                (
-                                                                    event,
-                                                                    index
-                                                                ) => {
-                                                                    if (
-                                                                        event &&
-                                                                        event.type ===
-                                                                            "log"
-                                                                    ) {
-                                                                        return (
-                                                                            <div
-                                                                                key={
-                                                                                    index
-                                                                                }
-                                                                                className="font-mono"
-                                                                                ref={
-                                                                                    index ===
-                                                                                    events.length -
-                                                                                        1
-                                                                                        ? scrollAreaRef
-                                                                                        : null
-                                                                                }
-                                                                            >
-                                                                                &gt;
-                                                                                {event.content
-                                                                                    .split(
-                                                                                        "]"
-                                                                                    )
-                                                                                    .at(
-                                                                                        1
-                                                                                    )}
-                                                                            </div>
-                                                                        );
-                                                                    }
-                                                                    return null;
+                                        {Object.entries(eventData).length ? (
+                                            Object.entries(eventData).map(
+                                                ([streamId, events]) => (
+                                                    <TabsContent
+                                                        key={streamId}
+                                                        value={streamId}
+                                                        className="mt-0 h-full p-4"
+                                                    >
+                                                        {events.length ? (
+                                                            <ScrollArea
+                                                                ref={
+                                                                    scrollAreaRef
                                                                 }
-                                                            )}
-                                                        </ScrollArea>
-                                                    ) : (
-                                                        <div className="my-auto flex h-full items-center justify-center text-o-primary">
-                                                            Agent logs will
-                                                            display here.
-                                                        </div>
-                                                    )}
-                                                </TabsContent>
+                                                            >
+                                                                {events.map(
+                                                                    (
+                                                                        event,
+                                                                        index
+                                                                    ) => {
+                                                                        if (
+                                                                            event &&
+                                                                            event.type ===
+                                                                                "log"
+                                                                        ) {
+                                                                            return (
+                                                                                <div
+                                                                                    key={
+                                                                                        index
+                                                                                    }
+                                                                                    className="font-mono"
+                                                                                    ref={
+                                                                                        index ===
+                                                                                        events.length -
+                                                                                            1
+                                                                                            ? scrollAreaRef
+                                                                                            : null
+                                                                                    }
+                                                                                >
+                                                                                    &gt;
+                                                                                    {event.content
+                                                                                        .split(
+                                                                                            "]"
+                                                                                        )
+                                                                                        .at(
+                                                                                            1
+                                                                                        )}
+                                                                                </div>
+                                                                            );
+                                                                        }
+                                                                        return null;
+                                                                    }
+                                                                )}
+                                                            </ScrollArea>
+                                                        ) : (
+                                                            <div className="text-o-primary my-auto flex h-full items-center justify-center">
+                                                                Agent logs will
+                                                                display here.
+                                                            </div>
+                                                        )}
+                                                    </TabsContent>
+                                                )
                                             )
+                                        ) : (
+                                            <div className="text-o-primary my-auto flex h-full items-center justify-center">
+                                                Agent logs will display here.
+                                            </div>
                                         )}
                                     </div>
                                 </Tabs>

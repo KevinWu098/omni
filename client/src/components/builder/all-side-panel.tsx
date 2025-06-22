@@ -59,10 +59,6 @@ export function AllSidePanel({
                         label="Total Tests"
                         value="27"
                     />
-                    {/* <BigText
-                        label="Total Tests"
-                        value="27"
-                    /> */}
                 </div>
 
                 <div className="flex flex-col gap-y-2">
@@ -73,7 +69,7 @@ export function AllSidePanel({
                     />
                     {/* TODO: Fix Select styling */}
                     <Select>
-                        <SelectTrigger className="h-8 w-full bg-o-background-light p-2 text-xs text-o-muted-light focus-visible:ring-o-muted">
+                        <SelectTrigger className="bg-o-background-light text-o-muted-light focus-visible:ring-o-muted h-8 w-full p-2 text-xs">
                             <SelectValue placeholder="Sort: Recent" />
                         </SelectTrigger>
                         <SelectContent>
@@ -86,7 +82,7 @@ export function AllSidePanel({
                 </div>
             </div>
 
-            <div className="h-[1px] w-full bg-o-background" />
+            <div className="bg-o-background h-[1px] w-full" />
 
             <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
                 <AnimatePresence initial={false}>
@@ -101,9 +97,9 @@ export function AllSidePanel({
                 </AnimatePresence>
             </ScrollArea>
 
-            <div className="mx-2 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1 ring-o-outline">
+            <div className="ring-o-outline mx-2 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
                 <PlusSquareIcon
-                    className="size-5 text-o-muted hover:cursor-pointer"
+                    className="text-o-muted size-5 hover:cursor-pointer"
                     onClick={handleAddTest}
                 />
 

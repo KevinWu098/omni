@@ -17,19 +17,18 @@ class FetchAIError(Exception):
 class FetchAIAgent:
     """AI agent for automated code editing and file operations"""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-sonnet-4-20250514"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4.1-2025-04-14"):
         """Initialize the Fetch.ai agent with API configuration"""
-        self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.model = model
-        self.base_url = "https://api.anthropic.com/v1"
+        self.base_url = "https://api.openai.com/v1"
         self.headers = {
             "Content-Type": "application/json",
-            "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01"
+            "Authorization": f"Bearer {self.api_key}"
         }
         
         if not self.api_key:
-            raise FetchAIError("API key not provided. Set ANTHROPIC_API_KEY environment variable.")
+            raise FetchAIError("API key not provided. Set OPENAI_API_KEY environment variable.")
     
     def view(self, path: Union[str, Path]) -> Dict[str, Any]: # type: ignore
         """Read files or list directory contents"""
@@ -251,13 +250,16 @@ What should I do next to complete this task? Respond with JSON only."""
             try:
                 # Make API call
                 response = requests.post(
-                    f"{self.base_url}/messages",
+                    f"{self.base_url}/chat/completions",
                     headers=self.headers,
                     json={
                         "model": self.model,
                         "max_tokens": 2000,
-                        "system": system_prompt,
                         "messages": [
+                            {
+                                "role": "system",
+                                "content": system_prompt
+                            },
                             {
                                 "role": "user", 
                                 "content": user_prompt
@@ -274,7 +276,7 @@ What should I do next to complete this task? Respond with JSON only."""
                     }
                 
                 ai_response = response.json()
-                content = ai_response.get("content", [{}])[0].get("text", "")
+                content = ai_response.get("choices", [{}])[0].get("message", {}).get("content", "")
                 
                 # Parse AI response
                 try:
@@ -481,47 +483,101 @@ IMPORTANT: Be specific about what was actually done. If a test file was created,
 Respond with JSON: {{"title": "specific title here", "body": "detailed description here"}}"""
 
         try:
+            # Check if API key is available
+            if not self.api_key:
+                return {
+                    "success": False,
+                    "error": "OPENAI_API_KEY not set or empty",
+                    "title": "AI-generated changes",
+                    "body": f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}"
+                }
+            
             # Make API call to generate PR metadata
             response = requests.post(
-                f"{self.base_url}/messages",
+                f"{self.base_url}/chat/completions",
                 headers=self.headers,
                 json={
                     "model": self.model,
                     "max_tokens": 1000,
-                    "system": system_prompt,
                     "messages": [
+                        {
+                            "role": "system",
+                            "content": system_prompt
+                        },
                         {
                             "role": "user",
                             "content": user_prompt
                         }
                     ]
-                }
+                },
+                timeout=30
             )
             
             if response.status_code != 200:
+                error_detail = ""
+                try:
+                    error_response = response.json()
+                    error_detail = f" - {error_response.get('error', {}).get('message', 'Unknown error')}"
+                except:
+                    error_detail = f" - {response.text[:200]}"
+                
                 return {
                     "success": False,
-                    "error": f"API request failed: {response.status_code}",
+                    "error": f"API request failed: {response.status_code}{error_detail}",
                     "title": "AI-generated changes",
-                    "body": "Changes made by Fetch.ai agent"
+                    "body": f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}"
                 }
             
             ai_response = response.json()
-            content = ai_response.get("content", [{}])[0].get("text", "")
+            content = ai_response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            
+            if not content:
+                return {
+                    "success": False,
+                    "error": "Empty response from API",
+                    "title": "AI-generated changes",
+                    "body": f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}",
+                    "raw_response": str(ai_response)
+                }
             
             # Try to parse JSON response
             try:
                 pr_data = json.loads(content)
+                title = pr_data.get("title", "AI-generated changes")
+                body = pr_data.get("body", "Changes made by Fetch.ai agent")
+                
+                # Validate that title and body are not empty
+                if not title.strip():
+                    title = "AI-generated changes"
+                if not body.strip():
+                    body = f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}"
+                
                 return {
                     "success": True,
-                    "title": pr_data.get("title", "AI-generated changes"),
-                    "body": pr_data.get("body", "Changes made by Fetch.ai agent"),
+                    "title": title,
+                    "body": body,
                     "ai_response": content
                 }
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                # Try to extract JSON manually if parsing fails
+                import re
+                json_match = re.search(r'\{[^{}]*"title"[^{}]*"body"[^{}]*\}', content, re.DOTALL)
+                if json_match:
+                    try:
+                        pr_data = json.loads(json_match.group())
+                        return {
+                            "success": True,
+                            "title": pr_data.get("title", "AI-generated changes"),
+                            "body": pr_data.get("body", f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}"),
+                            "ai_response": content
+                        }
+                    except:
+                        pass
+                
                 # Fallback if JSON parsing fails
                 return {
                     "success": False,
+                    "error": f"JSON parsing failed: {str(e)}",
                     "title": "AI-generated changes",
                     "body": f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}",
                     "ai_response": content
@@ -532,7 +588,7 @@ Respond with JSON: {{"title": "specific title here", "body": "detailed descripti
                 "success": False,
                 "error": f"Failed to generate PR metadata: {str(e)}",
                 "title": "AI-generated changes",
-                "body": "Changes made by Fetch.ai agent"
+                "body": f"Changes made by Fetch.ai agent:\n\n{chr(10).join(actions_summary)}"
             }
 
 
