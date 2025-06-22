@@ -4,3 +4,4 @@ server/testing/.python-version
 server/testing/pyproject.toml
 server/testing/Anaconda Prompt omni thingy.lnk
 server/testing/__pycache__/stream.cpython-311.pyc
+server/testing/.env
