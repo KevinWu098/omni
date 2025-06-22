@@ -17,7 +17,7 @@ class FetchAIError(Exception):
 class FetchAIAgent:
     """AI agent for automated code editing and file operations"""
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "claude-sonnet-4-20250514"):
         """Initialize the Fetch.ai agent with API configuration"""
         self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
         self.model = model
