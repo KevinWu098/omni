@@ -15,9 +15,9 @@ import numpy as np
 from PIL import Image
 from flask import Flask, request, Response
 from werkzeug.serving import make_server
-from playwright.async_api import async_playwright
 import av  # Requires python-av
 from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
+from browser_use import BrowserSession
 
 # ════════════════════════════════════════════════════════════════════════
 #  Logging util
@@ -70,7 +70,8 @@ class MemHLS:
         log(f"PUT segment {name} ({len(data)} B)")
         self.segs[name] = data
         self.order.append(name)
-        while len(self.order) > self.order.maxlen:
+        # Only trim when maxlen is set and exceeded
+        while self.order.maxlen is not None and len(self.order) > self.order.maxlen:
             self.segs.pop(self.order.popleft(), None)
 
     def get_playlist(self) -> str:
@@ -85,14 +86,16 @@ STORE = MemHLS()
 #  Recorder  (Playwright page → FFmpeg stdin → HLS PUT back to Flask)
 # ════════════════════════════════════════════════════════════════════════
 class Recorder:
-    def __init__(self, page):
-        self.page = page
+    def __init__(self, session):
+        self.session = session
         self.proc: Optional[subprocess.Popen] = None
         self.running = False
 
     async def start(self):
         log("Recorder.start")
         self._spawn_ffmpeg()
+        # get the underlying Playwright page for screenshots
+        self.page = await self.session.get_current_page()
         self.running = True
         asyncio.create_task(self._capture_loop())
 
@@ -146,6 +149,7 @@ class Recorder:
         while self.running:
             t0 = time.perf_counter()
 
+            # Take screenshot directly for performance
             jpeg = await self.page.screenshot(type="jpeg", quality=75)
             rgb  = np.asarray(
                 Image.open(io.BytesIO(jpeg))
@@ -359,19 +363,28 @@ async def main():
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     log(f"Serving http://{HOST}:{PORT}")
 
-    pw = await async_playwright().start()
-    browser = await pw.chromium.launch(headless=False)
-    page = await browser.new_page(viewport={'width': W, 'height': H})
+    # launch a headful browser with fixed window and viewport size
+    session = BrowserSession(
+        headless=False,        # type: ignore
+        disable_security=True,  # type: ignore
+        viewport={'width': W, 'height': H},      # type: ignore
+        window_size={'width': W, 'height': H},   # type: ignore
+        no_viewport=False,      # type: ignore
+    )
+    await session.start()
+    # Navigate to the starting URL
+    page = await session.get_current_page()
     await page.goto("https://example.com")
     log("Page loaded")
 
-    recorder = Recorder(page)
+    recorder = Recorder(session)
     await recorder.start()
     log("Recorder started")
 
     def shutdown(*_):
         log("Shutdown")
         asyncio.create_task(recorder.stop())
+        asyncio.create_task(session.stop())
         httpd.shutdown()
         sys.exit(0)
     signal.signal(signal.SIGINT, shutdown)
