@@ -104,7 +104,8 @@ class AgentService:
 
     def run_command_streaming(self, commands: list[str]):
         """Generator that yields logs as they come in sequentially for each command"""
-        for command in commands:
+        # commands[0] is navigation; commands[1:] correspond to test.steps[0:]
+        for idx, command in enumerate(commands):
             # Start the command execution
             future = asyncio.run_coroutine_threadsafe(
                 self._run_command_async(command), self.loop
@@ -118,15 +119,26 @@ class AgentService:
                         # Get the final result
                         result = self.log_queue.get(timeout=0.1)
                         yield f"data: {{'type': 'result', 'content': '{result}'}}\n\n"
-                        # If the result indicates failure, stop processing further commands
-                        if "task completed without success" in result.lower():
-                            return
+                        # Emit step status for actual test steps (skip nav)
+                        if idx > 0:
+                            step_index = idx - 1
+                            if "task completed without success" in result.lower():
+                                yield f"data: {{'type': 'step_status', 'index': {step_index}, 'status': 'failure'}}\n\n"
+                                return
+                            else:
+                                yield f"data: {{'type': 'step_status', 'index': {step_index}, 'status': 'success'}}\n\n"
                         break
                     else:
-                        # Only stop on the explicit failure phrase
-                        if "task completed without success" in log_msg.lower():
-                            yield f"data: {{'type': 'log', 'content': '{log_msg}'}}\n\n"
+                        # Only stop on the explicit failure phrase for actual test steps
+                        if (
+                            idx > 0
+                            and "task completed without success" in log_msg.lower()
+                        ):
+                            # send failure status
+                            step_index = idx - 1
+                            yield f"data: {{'type': 'step_status', 'index': {step_index}, 'status': 'failure'}}\n\n"
                             return
+                        # Always send raw log
                         yield f"data: {{'type': 'log', 'content': '{log_msg}'}}\n\n"
                 except queue.Empty:
                     if future.done():
