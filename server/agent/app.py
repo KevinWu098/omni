@@ -14,17 +14,49 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+
+@app.route("/diag", methods=["GET"])
+def diag():
+    return jsonify({"agents": list(agents.keys())})
+
+
 @app.route("/run_command", methods=["POST"])
 def run_command():
+
     data = request.get_json(force=True)
     command = data.get("command")
+
     if not command:
         return jsonify({"error": "Missing 'command' in JSON body"}), 400
 
-    # Create a new service instance with a unique run ID
-    run_id = str(uuid4())
-    service = VideoAgentService(run_id)
-    agents[run_id] = service
+    run_id = data.get(
+        "run_id", None
+    )  # if no run id specified then generate new browser
+    if not run_id:
+        run_id = str(uuid4())
+
+        # Create a new service instance with a unique run ID
+        service = VideoAgentService(run_id)
+        agents[run_id] = service
+    else:
+
+        if run_id not in agents:
+            # Create a new service instance with a unique run ID
+            service = VideoAgentService(run_id)
+            agents[run_id] = service
+        else:
+            service = agents.get(run_id)
+            if not service:
+                return (
+                    jsonify(
+                        {
+                            "error": f"Run ID {run_id} not found or session already shut down."
+                        }
+                    ),
+                    404,
+                )
+            # Ensure the service is not marked as done if it's being reused
+            service.done = False
 
     def generate():
         try:
@@ -35,10 +67,13 @@ def run_command():
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
+        except Exception as e:
+            # Catch exceptions during streaming and send an message
+            yield f"data: {{'type': 'error', 'content': '{str(e)}'}}\n\n"
+            service.shutdown()  # Shutdown on error
+            del agents[run_id]  # Remove from active agents
         finally:
-            service.shutdown()
-            # Mark the agent as done for future streaming endpoints
-            service.done = True
+            pass
 
     return Response(
         stream_with_context(generate()),
@@ -48,6 +83,16 @@ def run_command():
             "Connection": "keep-alive",
         },
     )
+
+
+@app.route("/shutdown_run/<run_id>", methods=["POST"])
+def shutdown_run(run_id):
+    service = agents.pop(run_id, None)
+    if service:
+        service.shutdown()
+        return jsonify({"message": f"Run ID {run_id} shut down successfully."})
+    return jsonify({"error": f"Run ID {run_id} not found."}), 404
+
 
 @app.route("/stream/<run_id>/playlist.m3u8", methods=["PUT", "GET"])
 def playlist(run_id):
@@ -62,6 +107,7 @@ def playlist(run_id):
         return "", 404
     return Response(pl, mimetype="application/vnd.apple.mpegurl")
 
+
 @app.route("/stream/<run_id>/segments/<name>", methods=["PUT", "GET"])
 def segment(run_id, name):
     service = agents.get(run_id)
@@ -75,13 +121,14 @@ def segment(run_id, name):
         return "", 404
     return Response(data, mimetype="video/mp2t")
 
+
 @app.route("/stream/<run_id>/offer", methods=["POST"])
 def offer(run_id):
     service = agents.get(run_id)
     if not service:
         return jsonify({"error": "Unknown run_id"}), 404
     # If WebRTC stream is done, return gone
-    if getattr(service, 'done', False):
+    if getattr(service, "done", False):
         return jsonify({"error": "WebRTC stream has ended"}), 410
     params = request.get_json(force=True)
     try:
@@ -90,6 +137,7 @@ def offer(run_id):
     except RuntimeError as e:
         # Handle closed event loop gracefully
         return jsonify({"error": "Agent not available"}), 410
+
 
 # Simple UI route for viewing HLS/WebRTC with live/DVR toggle
 VIEW_HTML = """
@@ -161,9 +209,12 @@ btn.onclick=()=>{live=!live;btn.textContent=live?'LIVE':'DVR';toggleLiveModeUI()
 toggleLiveModeUI();
 </script>
 """
+
+
 @app.route("/view")
 def view():
     return VIEW_HTML
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)

@@ -77,6 +77,7 @@ class AgentService:
             user_data_dir=None,  # type: ignore
             chromium_sandbox=False,  # type: ignore
             args=["--no-sandbox", "--disable-gpu-sandbox", "--disable-setuid-sandbox"],  # type: ignore
+            keep_alive=True,
         )
         await self.session.start()  
           
@@ -84,7 +85,7 @@ class AgentService:
         if not api_key:  
             raise ValueError("Missing OPENAI_API_KEY environment variable")  
         self.llm = ChatOpenAI(  # type: ignore
-            model="gpt-4o",  # type: ignore
+            model="gpt-4.1",  # type: ignore
             temperature=0.0,  # type: ignore
             api_key=SecretStr(api_key),  # type: ignore
         )  
