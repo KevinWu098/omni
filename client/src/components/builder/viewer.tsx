@@ -178,9 +178,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                 defaultSize={65}
             >
                 <div className="flex flex-row items-center justify-between px-4 py-3 font-medium">
-                    <span className="w-24 truncate leading-none">
-                        All Agents
-                    </span>
+                    <span className="w-24 truncate leading-none">Demo</span>
 
                     <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
                         https://staging-1720.scikit-learn.com/
