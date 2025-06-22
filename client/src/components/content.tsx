@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { AllSidePanel } from "@/components/builder/all-side-panel";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
-import { SingleSidePanel } from "@/components/builder/single/single-side-panel";
 import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
 import { RunnerSidebar } from "@/components/runner/runner-sidebar";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
+import { PRWithComments } from "@/lib/github";
 import { useQueryState } from "nuqs";
 
 export type Step = {
@@ -21,7 +20,11 @@ export type Test = {
     status: "enabled" | "disabled";
 };
 
-export function Content() {
+interface ContentProps {
+    prWithComments?: PRWithComments | null;
+}
+
+export function Content({ prWithComments }: ContentProps) {
     const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
         "mode",
         {
@@ -65,7 +68,7 @@ export function Content() {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     return (
-        <div className="bg-o-background flex h-full flex-row">
+        <div className="flex h-full flex-row bg-o-background">
             <SidebarWrapper
                 title="Test Suite"
                 show={activeSidebar === "test-builder"}
@@ -78,7 +81,7 @@ export function Content() {
                 />
             </SidebarWrapper>
 
-            <Viewer />
+            <Viewer prWithComments={prWithComments} />
 
             <SidebarWrapper
                 title="Summary"

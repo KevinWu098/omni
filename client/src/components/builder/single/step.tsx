@@ -27,15 +27,15 @@ export function Step({
 
     return (
         <Collapsible
-            className="border-o-outline peer space-y-1 rounded-md border p-2"
+            className="peer space-y-1 rounded-md border border-o-outline p-2"
             open={open}
             onOpenChange={setOpen}
         >
-            <CollapsibleTrigger className="text-o-muted flex w-full flex-row items-center justify-between text-xs font-medium">
+            <CollapsibleTrigger className="flex w-full flex-row items-center justify-between text-xs font-medium text-o-muted">
                 <span>Step {index + 1}</span>
                 <Icon className="size-4" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="text-o-white space-y-2">
+            <CollapsibleContent className="space-y-2 text-o-white">
                 {step.title ? (
                     <span className="text-sm font-medium">{step.title}</span>
                 ) : (
@@ -64,7 +64,7 @@ export function Step({
                 )}
 
                 {step.image && (
-                    <div className="border-o-outline mt-1 flex items-center justify-center rounded-md border text-sm">
+                    <div className="mt-1 flex items-center justify-center rounded-md border border-o-outline text-sm">
                         {step.image}
                     </div>
                 )}
