@@ -1,6 +1,8 @@
-import { TestCard, type Test } from "@/components/ui/builder/test-card";
+import { type Test } from "@/components/ui/builder/content";
+import { TestCard } from "@/components/ui/builder/test-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Select,
     SelectContent,
@@ -10,31 +12,37 @@ import {
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
 
-const TEST_CARDS: Test[] = [
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-];
-
 export function AllSidePanel({
+    tests,
     handleTestClick,
+    setTests,
 }: {
+    tests: Test[];
     handleTestClick: (test: Test) => void;
+    setTests: React.Dispatch<React.SetStateAction<Test[]>>;
 }) {
+    const handleAddTest = () => {
+        setTests((prevTests) => {
+            const newTestCount = prevTests.filter((test) =>
+                test.title.startsWith("New Test")
+            ).length;
+            const title =
+                newTestCount > 0 ? `New Test (${newTestCount})` : "New Test";
+
+            return [
+                ...prevTests,
+                {
+                    id: String(prevTests.length + 1),
+                    title,
+                    steps: [],
+                    status: "disabled",
+                },
+            ];
+        });
+    };
+
     return (
-        <div className="bg-o-base-background text-o-white box-border flex h-[calc(100%-30px)] flex-col border-r-2 border-t-2 border-[#141414]">
+        <>
             <div className="flex flex-col gap-y-4 p-4 pt-6">
                 <div className="flex flex-row gap-10">
                     <div className="flex flex-col font-medium">
@@ -67,29 +75,26 @@ export function AllSidePanel({
                 </div>
             </div>
 
-            <div className="flex flex-1 flex-col">
-                {TEST_CARDS.map((testCard, index) => (
+            <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
+                {tests.map((testCard, index) => (
                     <TestCard
                         key={index}
                         {...testCard}
                         handleTestClick={handleTestClick}
                     />
                 ))}
-            </div>
+            </ScrollArea>
 
             <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
-                <PlusSquareIcon className="text-o-muted size-5" />
+                <PlusSquareIcon
+                    className="text-o-muted size-5 hover:cursor-pointer"
+                    onClick={handleAddTest}
+                />
 
                 <div className="flex flex-row gap-x-2">
-                    {/* <Button
-                                variant={"ghost"}
-                                className="hover:bg-inherit hover:text-inherit"
-                            >
-                                Edit
-                            </Button> */}
                     <Button variant={"destructive"}>Run All Tests</Button>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

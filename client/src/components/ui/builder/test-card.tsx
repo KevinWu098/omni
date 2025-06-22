@@ -1,43 +1,41 @@
+import { type Test } from "@/components/ui/builder/content";
 import { cn } from "@/lib/utils";
-
-export type Test = { title: string; steps: number; status: string };
 
 type TestCardProps = Test & {
     handleTestClick: ((test: Test) => void) | null;
 };
 
-export function TestCard({
-    title,
-    steps,
-    status,
-    handleTestClick,
-}: TestCardProps) {
+const STATUS_COLORS: Record<Test["status"], string> = {
+    enabled: "text-o-green",
+    disabled: "text-o-red",
+};
+
+export function TestCard({ handleTestClick, ...test }: TestCardProps) {
     return (
         <div
             className={cn(
                 "border-o-background flex flex-col gap-y-4 border-t-[1px] p-4 last:border-b-[1px]",
                 handleTestClick && "hover:bg-o-base-foreground cursor-pointer"
             )}
-            onClick={() => handleTestClick?.({ title, steps, status })}
+            onClick={() => handleTestClick?.(test)}
         >
-            <span className="text-medium text-base">{title}</span>
+            <span className="text-medium text-base">{test.title}</span>
 
             <div className="flex flex-col gap-y-3">
                 <div className="flex h-full flex-row items-center text-sm font-medium">
                     <p>Steps</p>
-                    <div className="border-o-outline h-full grow border-b-[1px] border-dashed">
+                    <div className="border-o-muted-dark h-full grow border-b-[1px] border-dashed">
                         &nbsp;
                     </div>
-                    <p>{steps}</p>
+                    <p>{test.steps.length}</p>
                 </div>
 
                 <div className="flex h-full flex-row items-center text-sm font-medium">
                     <p>Status</p>
-                    <div className="border-o-outline h-full grow border-b-[1px] border-dashed">
+                    <div className="border-o-muted-dark h-full grow border-b-[1px] border-dashed">
                         &nbsp;
                     </div>
-                    {/* TODO: Add status color */}
-                    <p className="text-o-green">{status}</p>
+                    <p className={STATUS_COLORS[test.status]}>{test.status}</p>
                 </div>
             </div>
         </div>
