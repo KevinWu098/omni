@@ -80,9 +80,7 @@ export function Content({ prData }: ContentProps) {
                     setSelectedTest={setSelectedTest}
                 />
             </SidebarWrapper>
-
             <Viewer prData={prData} />
-
             <SidebarWrapper
                 title="Summary"
                 show={activeSidebar === "test-runner"}

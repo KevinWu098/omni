@@ -13,7 +13,6 @@ interface PageProps {
 export default async function Page({ searchParams }: PageProps) {
     const params = await searchParams;
     let prData = null;
-
     if (params.repo && params.pr) {
         try {
             const session = await getServerSession(authOptions);

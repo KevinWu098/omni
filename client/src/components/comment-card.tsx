@@ -1,3 +1,7 @@
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
+
 interface Comment {
     id: number | string;
     username: string;
@@ -26,9 +30,82 @@ export function CommentCard({ comment }: CommentCardProps) {
                     <span className="text-xs font-medium text-o-muted">
                         {comment.username}
                     </span>
-                    <span className="text-sm text-o-white">
-                        {comment.content}
-                    </span>
+                    <div className="prose prose-invert prose-sm max-w-none text-sm text-o-white">
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeRaw]}
+                            components={{
+                                // Style links
+                                a: ({ href, children, ...props }) => (
+                                    <a
+                                        href={href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-400 underline hover:text-blue-300"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </a>
+                                ),
+                                // Style images (both markdown and HTML)
+                                img: ({
+                                    src,
+                                    alt,
+                                    width,
+                                    height,
+                                    ...props
+                                }) => (
+                                    <img
+                                        src={src}
+                                        alt={alt}
+                                        width={width}
+                                        height={height}
+                                        className="h-auto max-w-full rounded border border-o-outline"
+                                        loading="lazy"
+                                        {...props}
+                                    />
+                                ),
+                                // Style code blocks
+                                pre: ({ children, ...props }) => (
+                                    <pre
+                                        className="overflow-x-auto rounded border border-o-outline bg-o-background-light p-2"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </pre>
+                                ),
+                                // Style inline code
+                                code: ({ children, ...props }) => (
+                                    <code
+                                        className="rounded bg-o-background-light px-1 py-0.5 text-xs"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </code>
+                                ),
+                                // Style blockquotes
+                                blockquote: ({ children, ...props }) => (
+                                    <blockquote
+                                        className="border-l-4 border-o-outline pl-4 italic text-o-muted"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </blockquote>
+                                ),
+                                // Keep paragraphs compact
+                                p: ({ children, ...props }) => (
+                                    <p
+                                        className="mb-2 last:mb-0"
+                                        {...props}
+                                    >
+                                        {children}
+                                    </p>
+                                ),
+                            }}
+                        >
+                            {comment.content}
+                        </ReactMarkdown>
+                    </div>
                 </div>
             </div>
         </div>
