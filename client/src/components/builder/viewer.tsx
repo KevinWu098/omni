@@ -7,9 +7,10 @@ import {
     ResizablePanel,
     ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { PRWithComments } from "@/lib/github";
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
 
-// Sample comment data
+// Sample comment data (fallback when no PR data)
 const sampleComments = [
     {
         id: 1,
@@ -49,7 +50,90 @@ const sampleComments = [
     },
 ];
 
-export function Viewer() {
+interface ViewerProps {
+    prWithComments?: PRWithComments | null;
+}
+
+export function Viewer({ prWithComments }: ViewerProps) {
+    // Use PR data if available, otherwise fall back to sample data
+    const title = prWithComments
+        ? `${prWithComments.pr.title} #${prWithComments.pr.number}`
+        : "feat: implement Google Calendar event overlay #177";
+
+    const baseBranch = prWithComments?.pr.base.ref || "main";
+    const headBranch =
+        prWithComments?.pr.head.ref || "174-fetch-google-calendar-data";
+
+    // Combine all comments into a timeline sorted by date
+    const comments = prWithComments
+        ? (() => {
+              const allComments = [];
+
+              // Add PR body as first comment
+              if (prWithComments.pr.body) {
+                  allComments.push({
+                      id: `pr-body-${prWithComments.pr.id}`,
+                      username: prWithComments.pr.user.login,
+                      content: prWithComments.pr.body,
+                      avatar_url: prWithComments.pr.user.avatar_url,
+                      created_at: prWithComments.pr.created_at,
+                      type: "description",
+                  });
+              }
+
+              // Add general comments
+              prWithComments.comments.forEach((comment) => {
+                  allComments.push({
+                      id: `comment-${comment.id}`,
+                      username: comment.user.login,
+                      content: comment.body,
+                      avatar_url: comment.user.avatar_url,
+                      created_at: comment.created_at,
+                      type: "comment",
+                  });
+              });
+
+              // Add reviews
+              prWithComments.reviews.forEach((review) => {
+                  if (review.body) {
+                      const reviewStateEmoji = {
+                          APPROVED: "✅",
+                          CHANGES_REQUESTED: "🔄",
+                          COMMENTED: "💬",
+                      };
+
+                      allComments.push({
+                          id: `review-${review.id}`,
+                          username: review.user.login,
+                          content: `${reviewStateEmoji[review.state]} ${review.body}`,
+                          avatar_url: review.user.avatar_url,
+                          created_at: review.submitted_at,
+                          type: "review",
+                      });
+                  }
+              });
+
+              // Add review comments (inline code comments)
+              prWithComments.reviewComments.forEach((reviewComment) => {
+                  allComments.push({
+                      id: `review-comment-${reviewComment.id}`,
+                      username: reviewComment.user.login,
+                      content: `📝 On ${reviewComment.path}${reviewComment.line ? `:${reviewComment.line}` : ""}\n\n${reviewComment.body}`,
+                      avatar_url: reviewComment.user.avatar_url,
+                      created_at: reviewComment.created_at,
+                      type: "review_comment",
+                  });
+              });
+
+              // Sort by date
+              return allComments.sort(
+                  (a, b) =>
+                      new Date(a.created_at).getTime() -
+                      new Date(b.created_at).getTime()
+              );
+          })()
+        : sampleComments;
+
     return (
         <ResizablePanelGroup
             direction="vertical"
@@ -74,9 +158,7 @@ export function Viewer() {
             <ResizablePanel className="bg-o-base-foreground">
                 <div className="flex-col space-y-2 border-b-2 border-o-background bg-o-base-background px-4 py-2">
                     <div className="flex w-full items-center justify-between">
-                        <span className="font-medium">
-                            feat: implement Google Calendar event overlay #177
-                        </span>
+                        <span className="font-medium">{title}</span>
                         <div>
                             <span>Add Diff Here</span>
                         </div>
@@ -84,7 +166,7 @@ export function Viewer() {
                     <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-1">
                             <Chip
-                                label="main"
+                                label={baseBranch}
                                 type="branch"
                             />
                             <ArrowLeftIcon
@@ -92,18 +174,18 @@ export function Viewer() {
                                 className="text-o-muted"
                             />
                             <Chip
-                                label="174-fetch-google-calendar-data"
+                                label={headBranch}
                                 type="branch"
                             />
                         </div>
                         <div className="flex items-center gap-2 text-sm text-o-muted">
-                            <span>53</span>
+                            <span>{comments.length}</span>
                             <MessagesSquareIcon size={14} />
                         </div>
                     </div>
                 </div>
                 <div className="flex h-full flex-col gap-4 overflow-y-auto px-4 py-4">
-                    {sampleComments.map((comment) => (
+                    {comments.map((comment) => (
                         <CommentCard
                             key={comment.id}
                             comment={comment}
