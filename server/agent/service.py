@@ -72,7 +72,7 @@ class AgentService:
             no_viewport=False,  # type: ignore
             viewport_expansion=-1,  # type: ignore
             highlight_elements=True,  # type: ignore
-            headless=False,  # type: ignore
+            headless=True,  # type: ignore
             disable_security=True,  # type: ignore
             user_data_dir=None,  # type: ignore
             chromium_sandbox=False,  # type: ignore
