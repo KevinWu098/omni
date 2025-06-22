@@ -3,6 +3,7 @@ import { type Test } from "@/components/ui/builder/content";
 import { Step } from "@/components/ui/builder/single/step";
 import { TestCard } from "@/components/ui/builder/test-card";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 
@@ -89,7 +90,7 @@ export function SingleSidePanel({
             />
 
             <div className="border-o-background flex max-h-[calc(100%-200px)] grow flex-col gap-y-4 border-t p-4">
-                <div className="flex flex-col gap-y-4 overflow-y-auto">
+                <ScrollArea className="flex flex-1 flex-col gap-y-4">
                     {activeTest?.steps.map((step, index) => (
                         <Step
                             key={index}
@@ -98,7 +99,7 @@ export function SingleSidePanel({
                             {...step}
                         />
                     ))}
-                </div>
+                </ScrollArea>
 
                 {creatingStep ? (
                     <div className="flex w-full flex-row gap-x-2">

@@ -5,6 +5,11 @@ type TestCardProps = Test & {
     handleTestClick: ((test: Test) => void) | null;
 };
 
+const STATUS_COLORS: Record<Test["status"], string> = {
+    enabled: "text-o-green",
+    disabled: "text-o-red",
+};
+
 export function TestCard({ handleTestClick, ...test }: TestCardProps) {
     return (
         <div
@@ -30,8 +35,7 @@ export function TestCard({ handleTestClick, ...test }: TestCardProps) {
                     <div className="border-o-muted-dark h-full grow border-b-[1px] border-dashed">
                         &nbsp;
                     </div>
-                    {/* TODO: Add status color */}
-                    <p className="text-o-green">{test.status}</p>
+                    <p className={STATUS_COLORS[test.status]}>{test.status}</p>
                 </div>
             </div>
         </div>

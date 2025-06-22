@@ -14,7 +14,7 @@ export type Test = {
     id: string;
     title: string;
     steps: Step[];
-    status: string;
+    status: "enabled" | "disabled";
 };
 
 export function Content() {
@@ -87,6 +87,7 @@ export function Content() {
                         <AllSidePanel
                             tests={tests}
                             handleTestClick={handleTestClick}
+                            setTests={setTests}
                         />
                     )}
                 </div>
