@@ -6,6 +6,7 @@ from pydantic import SecretStr
 from browser_use import BrowserSession, BrowserProfile, Agent
 from langchain_openai import ChatOpenAI
 
+
 class AgentService:
     """
     Manages a persistent browser session and LLM for a single agent.
@@ -20,7 +21,7 @@ class AgentService:
 
         # Prepare a unique profile directory for this agent's persistent context
         base = tempfile.gettempdir()
-        profile_dir = os.path.join(base, 'omni_agent_profiles', agent_id)
+        profile_dir = os.path.join(base, "omni_agent_profiles", agent_id)
         os.makedirs(profile_dir, exist_ok=True)
         # Start the browser session with a unique user_data_dir (persistent context)
         self.session = BrowserSession(
@@ -28,9 +29,9 @@ class AgentService:
                 viewport_expansion=-1,
                 highlight_elements=True,
                 headless=False,
-                disable_security=True
+                disable_security=True,
             ),
-            user_data_dir=profile_dir  # type: ignore
+            user_data_dir=profile_dir,  # type: ignore
         )
         self.loop.run_until_complete(self.session.start())
 
@@ -39,9 +40,7 @@ class AgentService:
         if not api_key:
             raise ValueError("Missing OPENAI_API_KEY environment variable")
         self.llm = ChatOpenAI(
-            model="gpt-4o",
-            temperature=0.0,
-            api_key=SecretStr(api_key)
+            model="gpt-4o", temperature=0.0, api_key=SecretStr(api_key)
         )
 
     async def _run_command(self, command: str) -> str:
@@ -69,4 +68,4 @@ class AgentService:
         Stop the browser session and close the event loop.
         """
         self.loop.run_until_complete(self.session.stop())
-        self.loop.close() 
+        self.loop.close()
