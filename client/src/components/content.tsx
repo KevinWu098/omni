@@ -156,7 +156,7 @@ export function Content({ prData }: ContentProps) {
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
     const [runnerStats, setRunnerStats] = useState({
         successCount: 0,
-        failureCount: 0,
+        failureCount: 1,
         isRunning: true,
     });
 
@@ -313,6 +313,7 @@ export function Content({ prData }: ContentProps) {
                                     successCount={runnerStats.successCount}
                                     failureCount={runnerStats.failureCount}
                                     isRunning={runnerStats.isRunning}
+                                    eventData={eventData}
                                 />
                             </SidebarWrapper>
                         </motion.div>

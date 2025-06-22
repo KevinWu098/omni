@@ -2,6 +2,7 @@ import { BigText } from "@/components/big-text";
 import { Test } from "@/components/content";
 import { MediumText } from "@/components/medium-text";
 import { AgentCard } from "@/components/runner/agent-card";
+import { EventData, StreamsEventData } from "@/lib/hooks/use-command-stream";
 import { CheckCircleIcon, HourglassIcon } from "lucide-react";
 
 export function RunnerSidebar({
@@ -10,12 +11,14 @@ export function RunnerSidebar({
     isRunning,
     totalTests,
     instances,
+    eventData,
 }: {
     successCount: number;
     failureCount: number;
     isRunning: boolean;
     totalTests: number;
     instances: number;
+    eventData: StreamsEventData;
 }) {
     return (
         <>
@@ -69,7 +72,14 @@ export function RunnerSidebar({
             </div>
 
             <div className="border-o-background box-border flex flex-col gap-y-4 border-t-2 p-4">
-                <AgentCard />
+                {Array(failureCount)
+                    .fill(null)
+                    .map((_, i) => (
+                        <AgentCard
+                            key={i}
+                            logs={eventData}
+                        />
+                    ))}
             </div>
         </>
     );
