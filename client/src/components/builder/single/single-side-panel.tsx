@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { type Test } from "@/components/builder/content";
 import { Step } from "@/components/builder/single/step";
 import { TestCard } from "@/components/builder/test-card";
+import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
 export function SingleSidePanel({
     activeTest,
@@ -90,15 +91,32 @@ export function SingleSidePanel({
             />
 
             <div className="border-o-background flex max-h-[calc(100%-200px)] grow flex-col gap-y-4 border-t p-4">
-                <ScrollArea className="flex flex-1 flex-col gap-y-4">
-                    {activeTest?.steps.map((step, index) => (
-                        <Step
-                            key={index}
-                            index={index}
-                            updateStepTitle={handleUpdateStepTitle}
-                            {...step}
-                        />
-                    ))}
+                <ScrollArea className="flex flex-col">
+                    <AnimatePresence initial={false}>
+                        {activeTest?.steps.map((step, index) => {
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{
+                                        duration: 0.1,
+                                        ease: "easeOut",
+                                    }}
+                                    className={cn(
+                                        index !== activeTest.steps.length - 1 &&
+                                            "mb-4"
+                                    )}
+                                >
+                                    <Step
+                                        index={index}
+                                        updateStepTitle={handleUpdateStepTitle}
+                                        {...step}
+                                    />
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
                 </ScrollArea>
 
                 {creatingStep ? (
@@ -155,7 +173,12 @@ export function SingleSidePanel({
                     >
                         Cancel
                     </Button>
-                    <Button variant={"default"}>Save</Button>
+                    <Button
+                        variant={"default"}
+                        onClick={() => setSelectedTest(null)}
+                    >
+                        Save
+                    </Button>
                 </div>
             </div>
         </>
