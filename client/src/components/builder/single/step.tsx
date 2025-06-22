@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Step } from "@/components/builder/content";
+import { type Step } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import {
     Collapsible,

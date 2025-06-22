@@ -178,6 +178,7 @@ video::-webkit-media-controls-buffering-indicator {display: none !important;}
 </style></head><body>
 <div id="bar">
   <button id="live">LIVE</button><span id="lat"></span>
+  <span id="webrtcStatus" style="margin-left:8px;color:#0f0;display:none;">webrtc: connecting</span>
   <div id="timeInfo"></div>
 </div>
 <video id="hlsVideo" playsinline muted autoplay controls style="width:100%"></video>
@@ -189,6 +190,7 @@ const hlsVideo = document.getElementById('hlsVideo');
 const webrtcVideo = document.getElementById('webrtcVideo');
 const btn = document.getElementById('live');
 const timeInfo = document.getElementById('timeInfo');
+const statusSpan = document.getElementById('webrtcStatus');
 const hls = new Hls({ 
   lowLatencyMode: true, 
   liveSyncDurationCount: 1,
@@ -218,6 +220,7 @@ function updateTimeDisplay() {
 // Function to toggle live mode UI
 function toggleLiveModeUI() {
   console.log("toggleLiveModeUI live=", live);
+  statusSpan.style.display = live ? '' : 'none';
   if (live) {
     hls.stopLoad();
     hls.detachMedia();
@@ -234,6 +237,12 @@ function toggleLiveModeUI() {
     hlsVideo.setAttribute('controls', '');
     hls.loadSource('/playlist.m3u8');
     hls.attachMedia(hlsVideo);
+    // Reset WebRTC connection and status
+    if (pc) {
+      try { pc.close(); } catch(e) { console.error("Error closing PC on DVR toggle", e); }
+      pc = null;
+    }
+    statusSpan.textContent = '';
   }
   updateTimeDisplay();
 }
@@ -321,16 +330,40 @@ setInterval(() => {
 </script>
 <script>
 // WebRTC setup for live
+let pc = null;
+const status = document.getElementById('webrtcStatus');
 async function startWebRTC() {
   console.log("startWebRTC called");
-  const pc = new RTCPeerConnection();
+  if (pc) {
+    try { pc.close(); } catch(e) { console.error("Error closing old PC", e); }
+  }
+  pc = new RTCPeerConnection({iceServers: []});
+  status.textContent = 'webrtc: connecting';
   console.log("RTCPeerConnection created", pc);
-  pc.onicecandidate = event => console.log("ICE candidate", event.candidate);
-  pc.oniceconnectionstatechange = () => console.log("ICE connection state:", pc.iceConnectionState);
+  pc.onicecandidate = event => {
+    if (event.candidate) console.log("ICE candidate", event.candidate);
+  };
+  pc.onconnectionstatechange = () => {
+    console.log("Connection state:", pc.connectionState);
+    if (status) {
+      status.textContent = 'webrtc: ' + pc.connectionState;
+    }
+    if (['disconnected','failed','closed'].includes(pc.connectionState)) {
+      console.warn("WebRTC connection state is", pc.connectionState, "-- retrying in 2s");
+      setTimeout(startWebRTC, 2000);
+    }
+  };
   pc.ontrack = (event) => {
     console.log("ontrack event:", event);
     webrtcVideo.srcObject = event.streams[0];
-    webrtcVideo.play().catch(e => console.error("webrtcVideo play error", e));
+    try {
+      const playPromise = webrtcVideo.play();
+      if (playPromise instanceof Promise) {
+        playPromise.catch(e => console.error("webrtcVideo play error", e));
+      }
+    } catch(e) {
+      console.error("webrtcVideo play invocation error", e);
+    }
   };
   const offer = await pc.createOffer({offerToReceiveVideo: true});
   console.log("Offer SDP generated");

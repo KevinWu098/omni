@@ -1,5 +1,6 @@
-import { type Test } from "@/components/builder/content";
+import { BigText } from "@/components/big-text";
 import { TestCard } from "@/components/builder/test-card";
+import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +12,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
 export function AllSidePanel({
     tests,
@@ -45,14 +47,14 @@ export function AllSidePanel({
         <>
             <div className="flex flex-col gap-y-4 p-4 pt-6">
                 <div className="flex flex-row gap-10">
-                    <div className="flex flex-col font-medium">
-                        <span className="text-xs">Total Tests</span>
-                        <span className="text-3xl">27</span>
-                    </div>
-                    <div className="flex flex-col font-medium">
-                        <span className="text-xs">Total Tests</span>
-                        <span className="text-3xl">27</span>
-                    </div>
+                    <BigText
+                        label="Total Tests"
+                        value="27"
+                    />
+                    <BigText
+                        label="Total Tests"
+                        value="27"
+                    />
                 </div>
 
                 <div className="flex flex-col gap-y-2">
@@ -76,13 +78,15 @@ export function AllSidePanel({
             </div>
 
             <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
-                {tests.map((testCard, index) => (
-                    <TestCard
-                        key={index}
-                        {...testCard}
-                        handleTestClick={handleTestClick}
-                    />
-                ))}
+                <AnimatePresence initial={false}>
+                    {tests.map((testCard) => (
+                        <TestCard
+                            key={testCard.id}
+                            {...testCard}
+                            handleTestClick={handleTestClick}
+                        />
+                    ))}
+                </AnimatePresence>
             </ScrollArea>
 
             <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
