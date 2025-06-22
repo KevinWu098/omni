@@ -81,24 +81,64 @@ export function Content({ prData }: ContentProps) {
                     title: "Search for professor 'Shindler'",
                     image: "IMAGE",
                 },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "bb",
+            title: "Navigate to peterportal.org",
+            url: "https://peterportal.org",
+            steps: [
                 {
-                    title: "Click on 'CS 162'",
+                    title: "Press the x on the pop-up, only if there is one",
                     image: "IMAGE",
                 },
                 {
-                    title: "Scroll down",
+                    title: "Click on the 'Professors' tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Search for professor 'Shindler'",
                     image: "IMAGE",
                 },
             ],
             status: "enabled",
         },
         {
-            id: "sdfsfsf",
-            url: "https://docs.python.org/3/library/stdtypes.html#str.parse",
-            title: "Navigate to .parse() documentation",
+            id: "cc",
+            title: "Check IrvineHacks dinner time",
+            url: "https://www.irvinehacks.com",
             steps: [
                 {
-                    title: "Navigate to .parse() documentation",
+                    title: "Click on the Schedule tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Scroll through schedule to find dinner time",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Verify dinner time is displayed",
+                    image: "IMAGE",
+                },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "dd",
+            title: "Check IrvineHacks dinner time",
+            url: "https://www.irvinehacks.com",
+            steps: [
+                {
+                    title: "Click on the Schedule tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Scroll through schedule to find dinner time",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Verify dinner time is displayed",
                     image: "IMAGE",
                 },
             ],
@@ -110,7 +150,13 @@ export function Content({ prData }: ContentProps) {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     const handleRunTest = () => {
-        const commands = ["Navigate to " + activeTest?.url, ...activeTest?.steps.map((step) => step.title as string) as string[]];
+        const commands = [
+            "Navigate to " + activeTest?.url,
+            ...(activeTest?.steps.map(
+                (step) => step.title as string
+            ) as string[]),
+        ];
+
         if (!commands?.length) {
             toast.warning("No commands to run");
             return;
@@ -120,7 +166,7 @@ export function Content({ prData }: ContentProps) {
     };
 
     return (
-        <div className="flex h-full flex-row bg-o-background">
+        <div className="bg-o-background flex h-full flex-row">
             <motion.div
                 className="h-full"
                 initial={{
@@ -182,7 +228,7 @@ export function Content({ prData }: ContentProps) {
                                 runId={runId}
                             />
                         ) : (
-                            <RunnerViewer />
+                            <RunnerViewer tests={tests} />
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -212,7 +258,10 @@ export function Content({ prData }: ContentProps) {
                                 title="Summary"
                                 show={true}
                             >
-                                <RunnerSidebar />
+                                <RunnerSidebar
+                                    totalTests={tests.length}
+                                    instances={Object.keys(eventData).length}
+                                />
                             </SidebarWrapper>
                         </motion.div>
                     )}

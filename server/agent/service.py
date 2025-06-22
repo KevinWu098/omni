@@ -1,8 +1,8 @@
 import asyncio
 import os
 import logging
-import queue
 import threading
+import queue
 from pydantic import SecretStr
 from flask import stream_with_context
 
@@ -33,8 +33,13 @@ class StreamingLogHandler(logging.Handler):
     def __init__(self, log_queue):
         super().__init__()
         self.log_queue = log_queue
+        # Record the loop thread name to isolate this agent's logs
+        self.thread_name = threading.current_thread().name
 
     def emit(self, record):
+        # Only emit logs originating from this handler's loop thread
+        if record.threadName != getattr(self, "thread_name", None):
+            return
         try:
             msg = self.format(record)
             self.log_queue.put(msg)
@@ -61,7 +66,6 @@ class AgentService:
         self.streaming_handler.setLevel(logging.INFO)
         formatter = logging.Formatter("%(levelname)-8s [%(name)s] %(message)s")
         self.streaming_handler.setFormatter(formatter)
-
         browser_use_logger = logging.getLogger("browser_use")
         browser_use_logger.addHandler(self.streaming_handler)
         browser_use_logger.setLevel(logging.INFO)
@@ -108,10 +112,10 @@ class AgentService:
             # Stream logs and results for this command
             while True:
                 try:
-                    log_msg = self.log_queue.get(timeout=1.0)
+                    log_msg = self.log_queue.get(timeout=0.1)
                     if log_msg == "__COMMAND_COMPLETE__":
                         # Get the final result
-                        result = self.log_queue.get(timeout=1.0)
+                        result = self.log_queue.get(timeout=0.1)
                         yield f"data: {{'type': 'result', 'content': '{result}'}}\n\n"
                         break
                     else:
