@@ -73,10 +73,10 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
     return (
         <ResizablePanelGroup
             direction="vertical"
-            className="text-o-white flex w-full flex-col"
+            className="flex w-full flex-col text-o-white"
         >
             <ResizablePanel
-                className="bg-o-background aspect-video w-full"
+                className="aspect-video w-full bg-o-background"
                 defaultSize={65}
             >
                 <div className="flex flex-row items-center justify-between px-4 py-3 text-sm font-medium">
@@ -90,7 +90,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                     </span>
 
                     <div
-                        className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
+                        className="w-24 cursor-pointer text-right leading-none text-o-primary underline underline-offset-2 hover:bg-inherit hover:text-o-primary/80"
                         onClick={() =>
                             setMode((prev) =>
                                 prev === "live" ? "dvr" : "live"
@@ -101,6 +101,11 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                     </div>
                 </div>
 
+                <img
+                    src="/press.svg"
+                    className="absolute bottom-[280px] right-[824px]"
+                />
+
                 {runIds.length ? (
                     <div className="grid max-h-[calc(100%-32px)] grid-cols-2 grid-rows-2 gap-1 p-4">
                         {runIds.map((runId) => (
@@ -110,7 +115,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                                 className={cn(
                                     "mx-auto flex w-fit cursor-pointer items-center justify-center",
                                     selectedStreamId === runId &&
-                                        "ring-o-primary ring-2"
+                                        "ring-2 ring-o-primary"
                                 )}
                             >
                                 <VideoPlayer
@@ -132,7 +137,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
             </ResizablePanel>
 
             <ResizableHandle
-                className="bg-o-outline min-h-1"
+                className="min-h-1 bg-o-outline"
                 withHandle
             />
 
@@ -147,19 +152,19 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                     }
                     className="flex h-full flex-col"
                 >
-                    <TabsList className="bg-o-background sticky top-0 z-20 h-fit w-full justify-start rounded-none p-0">
+                    <TabsList className="sticky top-0 z-20 h-fit w-full justify-start rounded-none bg-o-background p-0">
                         <TabsTrigger
                             value="timeline"
                             asChild
-                            className="border-o-background data-[state=active]:bg-o-base-background box-border rounded-none border-r"
+                            className="box-border rounded-none border-r border-o-background data-[state=active]:bg-o-base-background"
                         >
-                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                                <span className="text-o-white text-xs font-medium leading-none">
+                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
+                                <span className="text-xs font-medium leading-none text-o-white">
                                     Timeline
                                 </span>
                                 <div
                                     className={cn(
-                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
+                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
                                         activeTab === "timeline" && "visible"
                                     )}
                                 />
@@ -168,15 +173,15 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                         <TabsTrigger
                             value="logs"
                             asChild
-                            className="data-[state=active]:bg-o-base-background border-o-background box-border rounded-none border-r"
+                            className="box-border rounded-none border-r border-o-background data-[state=active]:bg-o-base-background"
                         >
-                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                                <span className="text-o-white text-xs font-medium leading-none">
+                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
+                                <span className="text-xs font-medium leading-none text-o-white">
                                     Logs
                                 </span>
                                 <div
                                     className={cn(
-                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
+                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
                                         activeTab === "logs" && "visible"
                                     )}
                                 />
@@ -189,7 +194,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                             value="timeline"
                             className="mt-0 h-full"
                         >
-                            <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
+                            <div className="box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
                                 <Timeline eventData={eventData} />
                             </div>
                         </TabsContent>
@@ -198,7 +203,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                             value="logs"
                             className="mt-0 h-full overflow-hidden"
                         >
-                            <div className="border-o-background bg-o-base-background flex h-[calc(100%-28px)] flex-col border-b-2 border-t-2">
+                            <div className="flex h-[calc(100%-28px)] flex-col border-b-2 border-t-2 border-o-background bg-o-base-background">
                                 <Tabs
                                     value={selectedStreamId}
                                     className="flex h-full flex-col"
@@ -206,17 +211,17 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                                         setSelectedStreamId(value)
                                     }
                                 >
-                                    <TabsList className="bg-o-background sticky top-0 z-10 h-fit w-full justify-start rounded-none p-0">
+                                    <TabsList className="sticky top-0 z-10 h-fit w-full justify-start rounded-none bg-o-background p-0">
                                         {Object.keys(eventData).map(
                                             (streamId) => (
                                                 <TabsTrigger
                                                     key={streamId}
                                                     value={streamId}
                                                     asChild
-                                                    className="data-[state=active]:bg-o-base-background border-o-background box-border rounded-none border-r"
+                                                    className="box-border rounded-none border-r border-o-background data-[state=active]:bg-o-base-background"
                                                 >
-                                                    <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
-                                                        <span className="text-o-white text-xs font-medium leading-none">
+                                                    <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
+                                                        <span className="text-xs font-medium leading-none text-o-white">
                                                             Agent{" "}
                                                             {parseInt(
                                                                 streamId
@@ -224,7 +229,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
                                                         </span>
                                                         <div
                                                             className={cn(
-                                                                "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
+                                                                "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
                                                                 selectedStreamId ===
                                                                     streamId &&
                                                                     "visible"

@@ -213,10 +213,10 @@ function page() {
                                             '"wght" 400, "wdth" 130',
                                     }}
                                 >
-                                    98%
+                                    16-64
                                 </span>
                                 <span className="z-10 text-lg text-o-muted-light">
-                                    Bug Detection Rate
+                                    Concurrent Agents
                                 </span>
                             </div>
                         </div>
@@ -264,7 +264,7 @@ function page() {
                                             '"wght" 400, "wdth" 130',
                                     }}
                                 >
-                                    500k+
+                                    50+
                                 </span>
                                 <span className="z-10 text-lg text-o-muted-light">
                                     Tests Generated

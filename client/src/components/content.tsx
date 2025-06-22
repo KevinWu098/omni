@@ -12,6 +12,7 @@ import { useCommandStream } from "@/lib/hooks/use-command-stream";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
+import { BACKEND_URL } from "@/lib/globals";
 
 export type Step = {
     title: string | null;
@@ -49,7 +50,7 @@ export function Content({ prData }: ContentProps) {
         }
     }, [runId, setRunId]);
 
-    const { eventData, sendCommand } = useCommandStream({
+    const { eventData, sendCommand, clearEvents } = useCommandStream({
         setRunId,
     });
 
@@ -149,7 +150,37 @@ export function Content({ prData }: ContentProps) {
 
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
-    const handleRunTest = () => {
+    // Add two-arg wrapper for sendCommand
+    const sendCommandWrapper = (commands: string[], id: string | undefined) =>
+        sendCommand(commands, id, "0");
+
+    // Add callback to update test URL state
+    const handleUpdateTestUrl = (newUrl: string) => {
+        if (!activeTest) return;
+        setTests((prevTests) =>
+            prevTests.map((test) =>
+                test.id === activeTest.id ? { ...test, url: newUrl } : test
+            )
+        );
+    };
+
+    const handleRunTest = async () => {
+        // Shutdown previous browser session if exists
+        if (runId) {
+            try {
+                await fetch(`${BACKEND_URL}/shutdown_run/${runId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ delete_video: true }),
+                });
+            } catch (err) {
+                console.error("Error shutting down previous run:", err);
+            }
+            // Clear previous logs and reset runId
+            clearEvents();
+            setRunId(defaultRunId);
+        }
+
         const commands = [
             "Navigate to " + activeTest?.url,
             ...(activeTest?.steps.map(
@@ -162,7 +193,7 @@ export function Content({ prData }: ContentProps) {
             return;
         }
 
-        sendCommand(commands, undefined, "0");
+        sendCommandWrapper(commands, undefined);
     };
 
     return (
@@ -198,7 +229,7 @@ export function Content({ prData }: ContentProps) {
                                     setSelectedTest={setSelectedTest}
                                     handleRunTest={handleRunTest}
                                     runId={runId}
-                                    sendCommand={sendCommand}
+                                    sendCommand={sendCommandWrapper}
                                 />
                             </SidebarWrapper>
                         </motion.div>
@@ -226,6 +257,7 @@ export function Content({ prData }: ContentProps) {
                                 eventData={eventData}
                                 activeTest={activeTest}
                                 runId={runId}
+                                updateTestUrl={handleUpdateTestUrl}
                             />
                         ) : (
                             <RunnerViewer tests={tests} />

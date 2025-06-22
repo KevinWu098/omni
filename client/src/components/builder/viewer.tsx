@@ -16,6 +16,7 @@ import { PRData } from "@/lib/github";
 import { EventData, StreamsEventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 // Sample comment data (fallback when no PR data)
 const sampleComments = [
@@ -62,9 +63,10 @@ interface ViewerProps {
     eventData?: StreamsEventData;
     activeTest: Test | undefined;
     runId: string | null;
+    updateTestUrl: (newUrl: string) => void;
 }
 
-export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
+export function Viewer({ prData, eventData, activeTest, runId, updateTestUrl }: ViewerProps) {
     const [activeTab, setActiveTab] = useState<"github" | "logs">("github");
 
     const title = prData ? (
@@ -180,9 +182,14 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                 <div className="flex flex-row items-center justify-between px-4 py-3 text-sm font-medium">
                     <span className="w-24 truncate leading-none">Demo</span>
 
-                    <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
-                        https://staging-1720.scikit-learn.com/
-                    </span>
+                    <div className="flex grow px-2">
+                        <Input
+                            type="text"
+                            value={activeTest?.url || ""}
+                            onChange={(e) => updateTestUrl(e.target.value)}
+                            className="text-sm"
+                        />
+                    </div>
 
                     <div
                         className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
