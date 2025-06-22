@@ -27,7 +27,8 @@ interface ContentProps {
 }
 
 export function Content({ prData }: ContentProps) {
-    const { eventData, sendCommand } = useCommandStream();
+    const [runId, setRunId] = useState<string | null>(null);
+    const { eventData, sendCommand } = useCommandStream({ setRunId });
 
     const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
         "mode",
@@ -100,6 +101,7 @@ export function Content({ prData }: ContentProps) {
                 prData={prData}
                 eventData={eventData}
                 activeTest={activeTest}
+                runId={runId}
             />
 
             <SidebarWrapper

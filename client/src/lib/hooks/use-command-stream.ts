@@ -7,7 +7,11 @@ export type EventData = {
     content: string;
 };
 
-export function useCommandStream() {
+export function useCommandStream({
+    setRunId,
+}: {
+    setRunId: (runId: string) => void;
+}) {
     const [eventData, setEventData] = useState<EventData[]>([]);
 
     const sendCommand = async (command: string) => {
@@ -49,6 +53,15 @@ export function useCommandStream() {
                         item.match(/'content':\s*'([^']*)'/) ||
                         item.match(/'content':\s*"([^"]*)"/) ||
                         [];
+                    const idMatch =
+                        item.match(/'id':\s*'([^']*)'/) ||
+                        item.match(/'id':\s*"([^"]*)"/) ||
+                        [];
+
+                    if (typeMatch[1] === "uuid" && idMatch[1]) {
+                        setRunId(idMatch[1]);
+                        continue;
+                    }
 
                     if (typeMatch[1] !== "log") {
                         continue;
@@ -59,7 +72,6 @@ export function useCommandStream() {
                             type: typeMatch[1],
                             content: contentMatch[1],
                         };
-                        console.log(eventData);
                         setEventData((prev) => [...prev, eventData]);
                     } else {
                         console.log("Failed to parse:", item);
