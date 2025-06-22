@@ -2,12 +2,18 @@ import { BigText } from "@/components/big-text";
 import { Test } from "@/components/content";
 import { MediumText } from "@/components/medium-text";
 import { AgentCard } from "@/components/runner/agent-card";
-import { HourglassIcon } from "lucide-react";
+import { CheckCircleIcon, HourglassIcon } from "lucide-react";
 
 export function RunnerSidebar({
+    successCount,
+    failureCount,
+    isRunning,
     totalTests,
     instances,
 }: {
+    successCount: number;
+    failureCount: number;
+    isRunning: boolean;
     totalTests: number;
     instances: number;
 }) {
@@ -27,20 +33,26 @@ export function RunnerSidebar({
                     </div>
 
                     <div className="text-o-white flex flex-row items-center gap-x-1 px-4">
-                        <span className="text-sm">Running</span>
-                        <HourglassIcon className="text-o-green size-4 animate-pulse" />
+                        <span className="text-sm">
+                            {isRunning ? "Running" : "Completed"}
+                        </span>
+                        {isRunning ? (
+                            <HourglassIcon className="text-o-green size-4 animate-pulse" />
+                        ) : (
+                            <CheckCircleIcon className="text-o-green size-4" />
+                        )}
                     </div>
                 </div>
 
                 <div className="flex flex-row gap-10 px-4">
                     <MediumText
                         label="Success"
-                        value="..."
+                        value={successCount.toString()}
                         type="success"
                     />
                     <MediumText
                         label="Failure"
-                        value="..."
+                        value={failureCount.toString()}
                         type="failure"
                     />
                     {/* <MediumText

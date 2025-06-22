@@ -8,11 +8,11 @@ import { RunnerSidebar } from "@/components/runner/runner-sidebar";
 import { RunnerViewer } from "@/components/runner/runner-viewer";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { PRData } from "@/lib/github";
+import { BACKEND_URL } from "@/lib/globals";
 import { useCommandStream } from "@/lib/hooks/use-command-stream";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
-import { BACKEND_URL } from "@/lib/globals";
 
 export type Step = {
     title: string | null;
@@ -51,7 +51,13 @@ export function Content({ prData }: ContentProps) {
         }
     }, [runId, setRunId]);
 
-    const { eventData, sendCommand, clearEvents, stepStatuses, clearStepStatuses } = useCommandStream({
+    const {
+        eventData,
+        sendCommand,
+        clearEvents,
+        stepStatuses,
+        clearStepStatuses,
+    } = useCommandStream({
         setRunId,
     });
 
@@ -151,7 +157,7 @@ export function Content({ prData }: ContentProps) {
     const [runnerStats, setRunnerStats] = useState({
         successCount: 0,
         failureCount: 0,
-        isRunning: false
+        isRunning: true,
     });
 
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
@@ -268,15 +274,9 @@ export function Content({ prData }: ContentProps) {
                                 updateTestUrl={handleUpdateTestUrl}
                             />
                         ) : (
-                            <RunnerViewer 
-                                tests={tests} 
-                                onStatusUpdate={(completed, failed, isRunning) => 
-                                    setRunnerStats({ 
-                                        successCount: completed - failed, 
-                                        failureCount: failed, 
-                                        isRunning 
-                                    })
-                                }
+                            <RunnerViewer
+                                tests={tests}
+                                setRunnerStats={setRunnerStats}
                             />
                         )}
                     </motion.div>
