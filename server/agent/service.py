@@ -165,9 +165,39 @@ class Recorder:
         self.proc = None
         self.running = False
         self.latest_frame = None
+    async def _get_capture_page(self):
+        # Use the library's human_current_page and agent_current_page first, skipping blank tabs
+        hc = getattr(self.session, 'human_current_page', None)
+        if hc:
+            try:
+                if not hc.is_closed() and getattr(hc, 'url', None) != 'about:blank':
+                    return hc
+            except Exception:
+                pass
+        ap = getattr(self.session, 'agent_current_page', None)
+        if ap:
+            try:
+                if not ap.is_closed() and getattr(ap, 'url', None) != 'about:blank':
+                    return ap
+            except Exception:
+                pass
+        # 3. first non-blank page in context pages
+        context = getattr(self.session, 'browser_context', None)
+        if context:
+            for pg in context.pages:
+                try:
+                    if pg.is_closed():
+                        continue
+                    if getattr(pg, 'url', None) and pg.url != 'about:blank':
+                        return pg
+                except Exception:
+                    continue
+        # 4. fallback to get_current_page()
+        return await self.session.get_current_page()
     async def start(self):
         self._spawn_ffmpeg()
-        self.page = await self.session.get_current_page()
+        # Use custom capture page selection
+        self.page = await self._get_capture_page()  # type: ignore
         self.running = True
         asyncio.create_task(self._capture_loop())
     async def stop(self):
@@ -214,8 +244,8 @@ class Recorder:
     async def _capture_loop(self):
         frame_interval = 1 / FPS
         while self.running:
-            # update to current active page before screenshot
-            self.page = await self.session.get_current_page()  # type: ignore
+            # update page before screenshot
+            self.page = await self._get_capture_page()  # type: ignore
             t0 = time.perf_counter()
             jpeg = await self.page.screenshot(type="jpeg", quality=75)
             rgb = np.asarray(
@@ -256,7 +286,7 @@ class VideoAgentService(AgentService):
     async def _prepare_page(self):
         # navigate to test page and set viewport
         page = await self.session.get_current_page()
-        await page.goto("https://example.com")
+        # await page.goto("https://example.com")
     def __init__(self, run_id: str):
         self.run_id = run_id
         super().__init__()
