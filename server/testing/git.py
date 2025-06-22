@@ -1,40 +1,33 @@
 #!/usr/bin/env python3
-"""
-Minimal GitHub repo puller
-"""
+"""Minimal GitHub repo cloner"""
 
 import os
-import requests
 import subprocess
-import zipfile
 from pathlib import Path
 import dotenv
+import requests
+import re
+import time
 
 dotenv.load_dotenv()
 
-# Configuration
 GITHUB_TOKEN = os.getenv('GITHUB_API_KEY')
 REPOS_DIR = Path('repos')
-
-def setup():
-    """Create repos directory"""
-    REPOS_DIR.mkdir(exist_ok=True)
 
 def clone_repo(repo_url, destination=None):
     """Clone repository using git"""
     if not destination:
         repo_name = repo_url.split('/')[-1].replace('.git', '')
         destination = REPOS_DIR / repo_name
-    
+
     if destination.exists():
         print(f"Repository already exists at {destination}")
         return str(destination)
-    
-    # Clone with token authentication
+
     auth_url = repo_url.replace('https://', f'https://{GITHUB_TOKEN}@')
     cmd = ['git', 'clone', auth_url, str(destination)]
     result = subprocess.run(cmd, capture_output=True, text=True)
-    
+
     if result.returncode == 0:
         print(f"✓ Cloned to {destination}")
         return str(destination)
@@ -42,69 +35,129 @@ def clone_repo(repo_url, destination=None):
         print(f"❌ Clone failed: {result.stderr}")
         return None
 
-def download_repo_archive(repo_path, destination=None):
-    """Download repository as ZIP archive"""
-    if not destination:
-        destination = REPOS_DIR / repo_path.replace('/', '_')
-    
-    if destination.exists():
-        print(f"Repository already exists at {destination}")
-        return str(destination)
-    
-    headers = {'Authorization': f'token {GITHUB_TOKEN}'}
-    archive_url = f'https://api.github.com/repos/{repo_path}/zipball/main'
-    
-    response = requests.get(archive_url, headers=headers, stream=True)
-    if response.status_code == 200:
-        zip_path = destination.with_suffix('.zip')
-        
-        with open(zip_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        
-        destination.mkdir(exist_ok=True)
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            zip_ref.extractall(destination)
-        
-        zip_path.unlink()  # Remove zip file
-        print(f"✓ Downloaded to {destination}")
-        return str(destination)
-    else:
-        print(f"❌ Download failed: {response.status_code}")
-        return None
-
-def pull_repo(repo_path_or_url, method='clone'):
-    """Pull a repository by path or URL"""
-    setup()
-    
+def make_pr(path, title, body='', head=None, base='main'):
+    """Create a pull request for changes in the repo at path."""
     if not GITHUB_TOKEN:
         print("❌ GITHUB_API_KEY environment variable not set")
         return None
+
+    path = Path(path)
+    if not path.exists():
+        print(f"❌ Path {path} does not exist")
+        return None
+
+    head_branch = head or f"pr-{int(time.time())}"
     
-    # Handle both URLs and repo paths
-    if repo_path_or_url.startswith('https://github.com/'):
-        repo_url = repo_path_or_url
-        repo_path = repo_path_or_url.replace('https://github.com/', '')
-    else:
-        repo_path = repo_path_or_url
-        repo_url = f'https://github.com/{repo_path}'
+    # Configure git user for this repo (use funny-ai-pipeline account)
+    subprocess.run(['git', 'config', 'user.name', 'funny-ai-pipeline'], cwd=str(path), capture_output=True, text=True)
+    subprocess.run(['git', 'config', 'user.email', 'funny-ai-pipeline@users.noreply.github.com'], cwd=str(path), capture_output=True, text=True)
     
-    if method == 'clone':
-        return clone_repo(repo_url)
-    elif method == 'download':
-        return download_repo_archive(repo_path)
+    # Check if there are any changes to commit
+    result = subprocess.run(['git', 'status', '--porcelain'], cwd=str(path), capture_output=True, text=True)
+    if not result.stdout.strip():
+        print("ℹ️ No changes detected, aborting PR creation")
+        return None
+    
+    # Create new branch
+    result = subprocess.run(['git', 'checkout', '-b', head_branch], cwd=str(path), capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"❌ Failed to create branch {head_branch}: {result.stderr}")
+        return None
+
+    # Stage and commit changes
+    result = subprocess.run(['git', 'add', '.'], cwd=str(path), capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"❌ Failed to stage changes: {result.stderr}")
+        return None
+
+    result = subprocess.run(['git', 'commit', '-m', title], cwd=str(path), capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"❌ Failed to commit changes: {result.stderr}")
+        return None
+
+    # Push branch
+    result = subprocess.run(['git', 'push', '-u', 'origin', head_branch], cwd=str(path), capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"❌ Failed to push branch {head_branch}: {result.stderr}")
+        return None
+
+    # Get remote URL
+    result = subprocess.run(['git', 'config', '--get', 'remote.origin.url'], cwd=str(path), capture_output=True, text=True)
+    remote_url = result.stdout.strip()
+    
+    # Normalize remote URL - remove authentication token
+    if remote_url.startswith('https://'):
+        # Remove token from URL: https://token@github.com/owner/repo -> https://github.com/owner/repo
+        remote_url = re.sub(r'https://[^@]*@github\.com/', 'https://github.com/', remote_url)
+    elif remote_url.startswith('git@github.com:'):
+        remote_url = remote_url.replace('git@github.com:', 'https://github.com/')
+    
+    # Remove .git suffix
+    if remote_url.endswith('.git'):
+        remote_url = remote_url[:-4]
+    
+    # Extract owner and repo name
+    if 'github.com/' in remote_url:
+        owner_repo = remote_url.split('github.com/')[-1]
+        parts = owner_repo.split('/')
+        owner, repo_name = parts[0], parts[1]
     else:
-        print("❌ Method must be 'clone' or 'download'")
+        print(f"❌ Could not parse GitHub URL: {remote_url}")
+        return None
+
+    # Create PR
+    api_url = f'https://api.github.com/repos/{owner}/{repo_name}/pulls'
+    headers = {'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'}
+    data = {'title': title, 'head': head_branch, 'base': base, 'body': body}
+    
+    print(f"🔍 Debug: API URL: {api_url}")
+    print(f"🔍 Debug: Owner: {owner}, Repo: {repo_name}")
+    print(f"🔍 Debug: Head branch: {head_branch}")
+    
+    response = requests.post(api_url, json=data, headers=headers)
+    if response.status_code in (200, 201):
+        pr = response.json()
+        pr_url = pr.get('html_url')
+        print(f"✓ Pull request created: {pr_url}")
+        return pr_url
+    else:
+        print(f"❌ Failed to create PR: {response.status_code}")
+        print(f"Response: {response.text}")
         return None
 
 if __name__ == "__main__":
-    # Example usage
-    repo = "uno-p-5/krazy-vibe-coded-website"
-    
-    print("🚀 Pulling repository...")
-    result = pull_repo(repo, method='clone')
-    
+    repo_url = "https://github.com/uno-p-5/krazy-vibe-coded-website"
+    REPOS_DIR.mkdir(exist_ok=True)
+    result = clone_repo(repo_url)
     if result:
         print(f"📁 Repository available at: {result}")
+        
+        # Create balls.txt with "fart" content
+        balls_file = Path(result) / "balls.txt"
+        balls_file.write_text("fart")
+        print(f"✓ Created {balls_file}")
+        
+        # Make PR
+        pr_url = make_pr(result, "create balls.txt")
+        if pr_url:
+            print(f"🎉 PR created successfully!")
+            
+            # Clean up - delete the repository folder
+            import shutil
+            import stat
+            
+            def remove_readonly(func, path, _):
+                """Clear the readonly bit and reattempt the removal"""
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            
+            try:
+                shutil.rmtree(result, onerror=remove_readonly)
+                print(f"🧹 Cleaned up repository folder: {result}")
+            except Exception as e:
+                print(f"⚠️ Cleanup failed: {e}")
+                print("Repository folder may need manual cleanup")
+        else:
+            print("❌ Failed to create PR")
     else:
-        print("❌ Failed to pull repository")
+        print("❌ Failed to clone repository")
