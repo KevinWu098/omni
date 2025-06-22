@@ -77,7 +77,7 @@ class AgentService:
             user_data_dir=None,  # type: ignore
             chromium_sandbox=False,  # type: ignore
             args=["--no-sandbox", "--disable-gpu-sandbox", "--disable-setuid-sandbox"],  # type: ignore
-            keep_alive=True,
+            keep_alive=True, # type: ignore
         )
         await self.session.start()  
           
