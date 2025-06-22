@@ -16,7 +16,8 @@ import { BACKEND_URL } from "@/lib/globals";
 
 export type Step = {
     title: string | null;
-    image: string | null;
+    // image field is no longer used but allowed for backward compatibility
+    [key: string]: unknown;
 };
 export type Test = {
     id: string;
@@ -50,7 +51,7 @@ export function Content({ prData }: ContentProps) {
         }
     }, [runId, setRunId]);
 
-    const { eventData, sendCommand, clearEvents } = useCommandStream({
+    const { eventData, sendCommand, clearEvents, stepStatuses, clearStepStatuses } = useCommandStream({
         setRunId,
     });
 
@@ -127,19 +128,19 @@ export function Content({ prData }: ContentProps) {
         },
         {
             id: "dd",
-            title: "Check IrvineHacks dinner time",
-            url: "https://www.irvinehacks.com",
+            title: "E-Commerce Website",
+            url: "https://krazy-vibe-coded-website.vercel.app/",
             steps: [
                 {
-                    title: "Click on the Schedule tab",
+                    title: "Click on 'Shop Now'",
                     image: "IMAGE",
                 },
                 {
-                    title: "Scroll through schedule to find dinner time",
+                    title: "Click on a product ONLY IF it's on the current page already and make sure it displays properly",
                     image: "IMAGE",
                 },
                 {
-                    title: "Verify dinner time is displayed",
+                    title: "Click the 'Home' link in the Navbar",
                     image: "IMAGE",
                 },
             ],
@@ -176,8 +177,9 @@ export function Content({ prData }: ContentProps) {
             } catch (err) {
                 console.error("Error shutting down previous run:", err);
             }
-            // Clear previous logs and reset runId
+            // Clear previous logs, statuses, and reset runId
             clearEvents();
+            clearStepStatuses();
             setRunId(defaultRunId);
         }
 
@@ -230,6 +232,7 @@ export function Content({ prData }: ContentProps) {
                                     handleRunTest={handleRunTest}
                                     runId={runId}
                                     sendCommand={sendCommandWrapper}
+                                    stepStatuses={stepStatuses}
                                 />
                             </SidebarWrapper>
                         </motion.div>

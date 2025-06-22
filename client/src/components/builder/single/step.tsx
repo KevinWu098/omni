@@ -12,13 +12,24 @@ import {
     ChevronDownIcon,
     ChevronUpIcon,
     PencilIcon,
+    XIcon,
+    Loader2Icon,
 } from "lucide-react";
+
+export type StepState = 'success' | 'failure' | 'running' | 'skipped';
+
+interface StepProps extends Step {
+    index: number;
+    updateStepTitle: (title: string) => void;
+    state?: StepState;
+}
 
 export function Step({
     index,
     updateStepTitle,
+    state,
     ...step
-}: Step & { index: number; updateStepTitle: (title: string) => void }) {
+}: StepProps) {
     const [open, setOpen] = useState(true);
     const [creatingTitle, setCreatingTitle] = useState("");
     const [editingTitle, setEditingTitle] = useState(step.title === null);
@@ -32,7 +43,28 @@ export function Step({
             onOpenChange={setOpen}
         >
             <CollapsibleTrigger className="flex w-full flex-row items-center justify-between text-xs font-medium text-o-muted">
-                <span>Step {index + 1}</span>
+                <div className="flex items-center gap-1">
+                    <span>Step {index + 1}</span>
+                    {state === 'success' && (
+                        <>
+                            <CheckIcon className="text-o-green size-4" />
+                            <span className="text-o-green text-xs">Successfully Passed</span>
+                        </>
+                    )}
+                    {state === 'failure' && (
+                        <>
+                            <XIcon className="text-o-red size-4" />
+                            <span className="text-o-red text-xs">Error Detected</span>
+                        </>
+                    )}
+                    {state === 'running' && (
+                        <>
+                            <Loader2Icon className="text-o-muted size-4 animate-spin" />
+                            <span className="text-o-muted text-xs">Running Step</span>
+                        </>
+                    )}
+                    {state === 'skipped' && <span className="text-o-muted text-xs">Skipped</span>}
+                </div>
                 <Icon className="size-4" />
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-2 text-o-white">

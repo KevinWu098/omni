@@ -19,6 +19,8 @@ export function useCommandStream({
     setRunId: (runId: string) => void;
 }) {
     const [eventData, setEventData] = useState<StreamsEventData>({});
+    // Track success/failure status per step index
+    const [stepStatuses, setStepStatuses] = useState<Record<number, 'success' | 'failure'>>({});
 
     const sendCommand = async (
         command: string[],
@@ -60,6 +62,20 @@ export function useCommandStream({
                         item.match(/'type':\s*'([^']*)'/) ||
                         item.match(/'type':\s*"([^"]*)"/) ||
                         [];
+                    // Handle step status events
+                    if (typeMatch[1] === 'step_status') {
+                        const indexMatch = item.match(/'index':\s*(\d+)/) || [];
+                        const statusMatch =
+                            item.match(/'status':\s*'([^']*)'/) ||
+                            item.match(/'status':\s*"([^"]*)"/) ||
+                            [];
+                        const idx = indexMatch[1] ? parseInt(indexMatch[1], 10) : undefined;
+                        const status = statusMatch[1] as 'success' | 'failure' | undefined;
+                        if (idx !== undefined && status) {
+                            setStepStatuses(prev => ({ ...prev, [idx]: status }));
+                        }
+                        continue;
+                    }
                     const contentMatch =
                         item.match(/'content':\s*'([^']*)'/) ||
                         item.match(/'content':\s*"([^"]*)"/) ||
@@ -111,5 +127,7 @@ export function useCommandStream({
                 delete newData[streamId];
                 return newData;
             }),
+        stepStatuses,
+        clearStepStatuses: () => setStepStatuses({}),
     };
 }

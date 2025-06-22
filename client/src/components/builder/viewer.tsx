@@ -349,10 +349,7 @@ export function Viewer({ prData, eventData, activeTest, runId, updateTestUrl }: 
                                                             : null
                                                     }
                                                 >
-                                                    &gt;
-                                                    {event.content
-                                                        .split("]")
-                                                        .at(1)}
+                                                    &gt; {event.content}
                                                 </div>
                                             );
                                         }

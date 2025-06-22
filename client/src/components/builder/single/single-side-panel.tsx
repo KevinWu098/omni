@@ -16,6 +16,7 @@ export function SingleSidePanel({
     handleRunTest,
     runId,
     sendCommand,
+    stepStatuses,
 }: {
     activeTest: Test;
     tests: Test[];
@@ -24,7 +25,16 @@ export function SingleSidePanel({
     handleRunTest: () => void;
     runId: string | null;
     sendCommand: (commands: string[], id: string | undefined) => Promise<void>;
+    stepStatuses: Record<number, 'success' | 'failure'>;
 }) {
+    // Determine number of completed statuses
+    const finishedCount = Object.keys(stepStatuses).length;
+    // Find first failure index
+    const failureEntry = Object.entries(stepStatuses).find(([, status]) => status === 'failure');
+    const failureIndex = failureEntry ? Number(failureEntry[0]) : undefined;
+    // Active run flag
+    const runActive = Boolean(runId);
+
     const [creatingStep, setCreatingStep] = useState<boolean>(false);
 
     const isInvalidStep = activeTest?.steps.at(-1)?.title === null;
@@ -122,11 +132,23 @@ export function SingleSidePanel({
                                             "mb-4"
                                     )}
                                 >
-                                    <Step
-                                        index={index}
-                                        updateStepTitle={handleUpdateStepTitle}
-                                        {...step}
-                                    />
+                                    {/* Determine step state */}
+                                    {(() => {
+                                        let state: 'success' | 'failure' | 'running' | 'skipped' | undefined;
+                                        if (stepStatuses[index] === 'success') state = 'success';
+                                        else if (stepStatuses[index] === 'failure') state = 'failure';
+                                        else if (failureIndex !== undefined && index > failureIndex) state = 'skipped';
+                                        else if (runActive && index === finishedCount) state = 'running';
+                                        else state = undefined;
+                                        return (
+                                            <Step
+                                                index={index}
+                                                updateStepTitle={handleUpdateStepTitle}
+                                                state={state}
+                                                {...step}
+                                            />
+                                        );
+                                    })()}
                                 </motion.div>
                             );
                         })}

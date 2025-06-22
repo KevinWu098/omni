@@ -10,6 +10,7 @@ export function BuilderSidebar({
     handleRunTest,
     runId,
     sendCommand,
+    stepStatuses,
 }: {
     activeTest: Test | undefined;
     tests: Test[];
@@ -18,6 +19,7 @@ export function BuilderSidebar({
     handleRunTest: () => void;
     runId: string | null;
     sendCommand: (commands: string[], id: string | undefined) => Promise<void>;
+    stepStatuses: Record<number, 'success' | 'failure'>;
 }) {
     const handleTestClick = (test: Test) => {
         setSelectedTest(test);
@@ -32,6 +34,7 @@ export function BuilderSidebar({
             handleRunTest={handleRunTest}
             runId={runId}
             sendCommand={sendCommand}
+            stepStatuses={stepStatuses}
         />
     ) : (
         <AllSidePanel
