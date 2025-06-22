@@ -28,7 +28,7 @@ export function Viewer() {
                 withHandle
             />
 
-            <ResizablePanel>DETAILS</ResizablePanel>
+            <ResizablePanel></ResizablePanel>
         </ResizablePanelGroup>
     );
 }
