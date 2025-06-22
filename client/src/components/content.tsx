@@ -68,19 +68,19 @@ export function Content({ prData }: ContentProps) {
     const [tests, setTests] = useState<Test[]>([
         {
             id: "aa",
-            title: "Navigate to peterportal.org",
-            url: "https://peterportal.org",
+            title: "Test Product Nav from About",
+            url: "https://krazy-vibe-coded-website.vercel.app/",
             steps: [
                 {
-                    title: "Press the x on the pop-up, only if there is one",
+                    title: "Click on the About button at the top nav bar",
                     image: "IMAGE",
                 },
                 {
-                    title: "Click on the 'Professors' tab",
+                    title: "Scroll all the way down",
                     image: "IMAGE",
                 },
                 {
-                    title: "Search for professor 'Shindler'",
+                    title: "Click 'Start Shopping' button and make sure it works",
                     image: "IMAGE",
                 },
             ],
@@ -88,19 +88,23 @@ export function Content({ prData }: ContentProps) {
         },
         {
             id: "bb",
-            title: "Navigate to peterportal.org",
-            url: "https://peterportal.org",
+            title: "Test Item Interaction By Category",
+            url: "https://krazy-vibe-coded-website.vercel.app/",
             steps: [
                 {
-                    title: "Press the x on the pop-up, only if there is one",
+                    title: "Click on the Categories button at the top nav bar",
                     image: "IMAGE",
                 },
                 {
-                    title: "Click on the 'Professors' tab",
+                    title: "Select Electronics category",
                     image: "IMAGE",
                 },
                 {
-                    title: "Search for professor 'Shindler'",
+                    title: "Select Premium Wireless Headphones",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Change the preview image on the left to the second one by clicking the selector on the bottom",
                     image: "IMAGE",
                 },
             ],
@@ -108,19 +112,15 @@ export function Content({ prData }: ContentProps) {
         },
         {
             id: "cc",
-            title: "Check IrvineHacks dinner time",
-            url: "https://www.irvinehacks.com",
+            title: "Test Increase Quantity",
+            url: "https://krazy-vibe-coded-website.vercel.app/",
             steps: [
                 {
-                    title: "Click on the Schedule tab",
+                    title: "Click on the Smart Fitness Watch",
                     image: "IMAGE",
                 },
                 {
-                    title: "Scroll through schedule to find dinner time",
-                    image: "IMAGE",
-                },
-                {
-                    title: "Verify dinner time is displayed",
+                    title: "Increase quantity to 5, do not add to cart",
                     image: "IMAGE",
                 },
             ],
@@ -128,7 +128,7 @@ export function Content({ prData }: ContentProps) {
         },
         {
             id: "dd",
-            title: "E-Commerce Website",
+            title: "Test Hero and Navbar",
             url: "https://krazy-vibe-coded-website.vercel.app/",
             steps: [
                 {
