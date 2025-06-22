@@ -12,6 +12,7 @@ import { useCommandStream } from "@/lib/hooks/use-command-stream";
 import { AnimatePresence, motion } from "motion/react";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
+import { BACKEND_URL } from "@/lib/globals";
 
 export type Step = {
     title: string | null;
@@ -49,7 +50,7 @@ export function Content({ prData }: ContentProps) {
         }
     }, [runId, setRunId]);
 
-    const { eventData, sendCommand } = useCommandStream({
+    const { eventData, sendCommand, clearEvents } = useCommandStream({
         setRunId,
     });
 
@@ -163,7 +164,23 @@ export function Content({ prData }: ContentProps) {
         );
     };
 
-    const handleRunTest = () => {
+    const handleRunTest = async () => {
+        // Shutdown previous browser session if exists
+        if (runId) {
+            try {
+                await fetch(`${BACKEND_URL}/shutdown_run/${runId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ delete_video: true }),
+                });
+            } catch (err) {
+                console.error("Error shutting down previous run:", err);
+            }
+            // Clear previous logs and reset runId
+            clearEvents();
+            setRunId(defaultRunId);
+        }
+
         const commands = [
             "Navigate to " + activeTest?.url,
             ...(activeTest?.steps.map(
