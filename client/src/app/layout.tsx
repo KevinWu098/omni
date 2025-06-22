@@ -34,7 +34,21 @@ export default function RootLayout({
             >
                 <AuthProvider>
                     <NuqsAdapter>
-                        {children}
+                        <div className="overflow-hidden bg-o-base-background">
+                            <div className="w-full bg-o-header p-2">
+                                <span
+                                    className="tracking-tightest flex items-center text-sm font-semibold uppercase leading-none text-o-white"
+                                    style={{
+                                        fontVariationSettings:
+                                            '"wght" 600, "wdth" 135',
+                                    }}
+                                >
+                                    Omni
+                                </span>
+                            </div>
+                            {children}
+                        </div>
+
                         <Toaster richColors />
                     </NuqsAdapter>
                 </AuthProvider>
