@@ -9,6 +9,7 @@ import { RunnerViewer } from "@/components/runner/runner-viewer";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { PRData } from "@/lib/github";
 import { useCommandStream } from "@/lib/hooks/use-command-stream";
+import { AnimatePresence, motion } from "motion/react";
 import { useQueryState } from "nuqs";
 import { toast } from "sonner";
 
@@ -121,39 +122,104 @@ export function Content({ prData }: ContentProps) {
 
     return (
         <div className="bg-o-background flex h-full flex-row">
-            <SidebarWrapper
-                title="Test Suite"
-                show={activeSidebar === "test-builder"}
+            <motion.div
+                className="h-full"
+                initial={{
+                    width: activeSidebar === "test-builder" ? "auto" : 0,
+                }}
+                animate={{
+                    width: activeSidebar === "test-builder" ? "auto" : 0,
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-                <BuilderSidebar
-                    activeTest={activeTest}
-                    tests={tests}
-                    setTests={setTests}
-                    setSelectedTest={setSelectedTest}
-                    handleRunTest={handleRunTest}
-                />
-            </SidebarWrapper>
+                <AnimatePresence mode="wait">
+                    {activeSidebar === "test-builder" && (
+                        <motion.div
+                            key="test-builder-sidebar"
+                            className="h-full"
+                            // initial={{ x: -300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -300, opacity: 0 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                        >
+                            <SidebarWrapper
+                                title="Test Suite"
+                                show={true}
+                            >
+                                <BuilderSidebar
+                                    activeTest={activeTest}
+                                    tests={tests}
+                                    setTests={setTests}
+                                    setSelectedTest={setSelectedTest}
+                                    handleRunTest={handleRunTest}
+                                />
+                            </SidebarWrapper>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
 
-            {activeSidebar === "test-builder" ? (
-                <Viewer
-                    prData={prData}
-                    eventData={eventData}
-                    activeTest={activeTest}
-                    runId={runId}
-                />
-            ) : (
-                <RunnerViewer
-                    runId={runId}
-                    eventData={eventData}
-                />
-            )}
-
-            <SidebarWrapper
-                title="Summary"
-                show={activeSidebar === "test-runner"}
+            <motion.div
+                className="h-full flex-1"
+                layout
+                transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-                <RunnerSidebar />
-            </SidebarWrapper>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeSidebar}
+                        className="h-full"
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                    >
+                        {activeSidebar === "test-builder" ? (
+                            <Viewer
+                                prData={prData}
+                                eventData={eventData}
+                                activeTest={activeTest}
+                                runId={runId}
+                            />
+                        ) : (
+                            <RunnerViewer
+                                runId={runId}
+                                eventData={eventData}
+                            />
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </motion.div>
+
+            <motion.div
+                className="h-full min-h-full"
+                initial={{
+                    width: activeSidebar === "test-runner" ? "400px" : 0,
+                }}
+                animate={{
+                    width: activeSidebar === "test-runner" ? "400px" : 0,
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+                <AnimatePresence mode="wait">
+                    {activeSidebar === "test-runner" && (
+                        <motion.div
+                            key="test-runner-sidebar"
+                            className="h-full"
+                            // initial={{ x: 300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 300, opacity: 0 }}
+                            transition={{ duration: 0.5, ease: "easeInOut" }}
+                        >
+                            <SidebarWrapper
+                                title="Summary"
+                                show={true}
+                            >
+                                <RunnerSidebar />
+                            </SidebarWrapper>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
         </div>
     );
 }

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useQueryState } from "nuqs";
 
 export function AllSidePanel({
     tests,
@@ -23,6 +24,13 @@ export function AllSidePanel({
     handleTestClick: (test: Test) => void;
     setTests: React.Dispatch<React.SetStateAction<Test[]>>;
 }) {
+    const [, setMode] = useQueryState<"test-builder" | "test-runner">("mode", {
+        defaultValue: "test-builder",
+        parse: (value: unknown): "test-builder" | "test-runner" => {
+            return value === "test-runner" ? "test-runner" : "test-builder";
+        },
+    });
+
     const handleAddTest = () => {
         setTests((prevTests) => {
             const newTestCount = prevTests.filter((test) =>
@@ -97,7 +105,12 @@ export function AllSidePanel({
                 />
 
                 <div className="flex flex-row gap-x-2">
-                    <Button variant={"destructive"}>Run All Tests</Button>
+                    <Button
+                        variant={"destructive"}
+                        onClick={() => setMode("test-runner")}
+                    >
+                        Run All Tests
+                    </Button>
                 </div>
             </div>
         </>
