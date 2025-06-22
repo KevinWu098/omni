@@ -3,11 +3,12 @@ from dotenv import load_dotenv
 import json
 
 from service import AgentService
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route("/run_command", methods=["POST"])
 def run_command():
