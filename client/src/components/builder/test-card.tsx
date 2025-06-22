@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { type Test } from "@/components/content";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 
 type TestCardProps = Test & {
+    setTests: React.Dispatch<React.SetStateAction<Test[]>> | null;
     handleTestClick: ((test: Test) => void) | null;
 };
 
@@ -11,7 +14,11 @@ const STATUS_COLORS: Record<Test["status"], string> = {
     disabled: "text-o-red",
 };
 
-export function TestCard({ handleTestClick, ...test }: TestCardProps) {
+export function TestCard({
+    handleTestClick,
+    setTests,
+    ...test
+}: TestCardProps) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -24,7 +31,23 @@ export function TestCard({ handleTestClick, ...test }: TestCardProps) {
             )}
             onClick={() => handleTestClick?.(test)}
         >
-            <span className="text-medium text-base">{test.title}</span>
+            {setTests ? (
+                <Input
+                    placeholder="Test name"
+                    value={test.title}
+                    onChange={(e) => {
+                        setTests((prevTests) =>
+                            prevTests.map((t) =>
+                                t.id === test.id
+                                    ? { ...t, title: e.target.value }
+                                    : t
+                            )
+                        );
+                    }}
+                />
+            ) : (
+                <span className="text-medium text-base">{test.title}</span>
+            )}
 
             <div className="flex flex-col gap-y-3">
                 <div className="flex h-full flex-row items-center text-sm font-medium">

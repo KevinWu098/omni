@@ -5,7 +5,7 @@ import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import { CheckIcon, FlaskConicalIcon, PlusIcon, XIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
 export function SingleSidePanel({
@@ -13,11 +13,13 @@ export function SingleSidePanel({
     tests,
     setTests,
     setSelectedTest,
+    handleRunTest,
 }: {
     activeTest: Test;
     tests: Test[];
     setTests: React.Dispatch<React.SetStateAction<Test[]>>;
     setSelectedTest: React.Dispatch<React.SetStateAction<Test | null>>;
+    handleRunTest: () => void;
 }) {
     const [creatingStep, setCreatingStep] = useState<boolean>(false);
 
@@ -88,6 +90,7 @@ export function SingleSidePanel({
             <TestCard
                 {...activeTest}
                 handleTestClick={null}
+                setTests={setTests}
             />
 
             <div className="border-o-background flex max-h-[calc(100%-200px)] grow flex-col gap-y-4 border-t p-4">
@@ -164,7 +167,12 @@ export function SingleSidePanel({
                 )}
             </div>
 
-            <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row justify-end rounded-md p-2 ring-1">
+            <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
+                <FlaskConicalIcon
+                    className="text-o-muted size-5 hover:cursor-pointer"
+                    onClick={handleRunTest}
+                />
+
                 <div className="flex flex-row gap-x-2">
                     <Button
                         variant={"ghost"}
@@ -175,7 +183,16 @@ export function SingleSidePanel({
                     </Button>
                     <Button
                         variant={"default"}
-                        onClick={() => setSelectedTest(null)}
+                        onClick={() => {
+                            setSelectedTest(null);
+                            setTests((prevTests) =>
+                                prevTests.map((test) =>
+                                    test.id === activeTest.id
+                                        ? { ...test, status: "enabled" }
+                                        : test
+                                )
+                            );
+                        }}
                     >
                         Save
                     </Button>

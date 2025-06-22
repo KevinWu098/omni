@@ -7,11 +7,13 @@ export function BuilderSidebar({
     tests,
     setTests,
     setSelectedTest,
+    handleRunTest,
 }: {
     activeTest: Test | undefined;
     tests: Test[];
     setTests: React.Dispatch<React.SetStateAction<Test[]>>;
     setSelectedTest: React.Dispatch<React.SetStateAction<Test | null>>;
+    handleRunTest: () => void;
 }) {
     const handleTestClick = (test: Test) => {
         setSelectedTest(test);
@@ -23,6 +25,7 @@ export function BuilderSidebar({
             tests={tests}
             setTests={setTests}
             setSelectedTest={setSelectedTest}
+            handleRunTest={handleRunTest}
         />
     ) : (
         <AllSidePanel
