@@ -92,7 +92,7 @@ class AgentService:
   
     async def _run_command_async(self, command: str):  
         agent = Agent(task=command, llm=self.llm, browser_session=self.session)  
-        result = await agent.run()  
+        result = await agent.run(max_steps = 3)  
         # Signal completion  
         self.log_queue.put("__COMMAND_COMPLETE__")  
         self.log_queue.put(str(result))  
