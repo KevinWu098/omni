@@ -1,4 +1,5 @@
 import threading
+import uuid
 
 from service import AgentService
 
@@ -11,13 +12,27 @@ class AgentManager:
         self._services: dict[str, AgentService] = {}
         self._lock = threading.Lock()
 
+    def create(self) -> tuple[str, AgentService]:
+        """
+        Create a new AgentService with a unique ID and store it.
+        """
+        with self._lock:
+            # ensure unique agent_id
+            while True:
+                agent_id = uuid.uuid4().hex
+                if agent_id not in self._services:
+                    svc = AgentService(agent_id)
+                    self._services[agent_id] = svc
+                    return agent_id, svc
+
     def get_or_create(self, agent_id: str) -> AgentService:
         """
         Retrieve existing AgentService for agent_id or initialize a new one.
         """
         with self._lock:
             if agent_id not in self._services:
-                self._services[agent_id] = AgentService()
+                svc = AgentService(agent_id)
+                self._services[agent_id] = svc
             return self._services[agent_id]
 
     def shutdown(self, agent_id: str) -> None:

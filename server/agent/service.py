@@ -1,5 +1,6 @@
 import asyncio
 import os
+import tempfile
 from pydantic import SecretStr
 
 from browser_use import BrowserSession, BrowserProfile, Agent
@@ -10,19 +11,26 @@ class AgentService:
     Manages a persistent browser session and LLM for a single agent.
     """
 
-    def __init__(self):
+    def __init__(self, agent_id: str):
+        # Assign agent ID (used as profile directory)
+        self.agent_id = agent_id
         # Create a dedicated event loop for this agent
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-        # Start the browser session (launch a new browser)
+        # Prepare a unique profile directory for this agent's persistent context
+        base = tempfile.gettempdir()
+        profile_dir = os.path.join(base, 'omni_agent_profiles', agent_id)
+        os.makedirs(profile_dir, exist_ok=True)
+        # Start the browser session with a unique user_data_dir (persistent context)
         self.session = BrowserSession(
             browser_profile=BrowserProfile(
                 viewport_expansion=-1,
                 highlight_elements=True,
                 headless=False,
                 disable_security=True
-            )
+            ),
+            user_data_dir=profile_dir  # type: ignore
         )
         self.loop.run_until_complete(self.session.start())
 
