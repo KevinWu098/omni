@@ -1,6 +1,8 @@
-import { TestCard, type Test } from "@/components/ui/builder/test-card";
+import { TestCard } from "@/components/builder/test-card";
+import { type Test } from "@/components/content";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Select,
     SelectContent,
@@ -9,30 +11,37 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PlusSquareIcon, SearchIcon } from "lucide-react";
-
-const TEST_CARDS: Test[] = [
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-    {
-        title: "Navigate to .parse() documentation",
-        steps: 3,
-        status: "enabled",
-    },
-];
+import { AnimatePresence, motion } from "motion/react";
 
 export function AllSidePanel({
+    tests,
     handleTestClick,
+    setTests,
 }: {
+    tests: Test[];
     handleTestClick: (test: Test) => void;
+    setTests: React.Dispatch<React.SetStateAction<Test[]>>;
 }) {
+    const handleAddTest = () => {
+        setTests((prevTests) => {
+            const newTestCount = prevTests.filter((test) =>
+                test.title.startsWith("New Test")
+            ).length;
+            const title =
+                newTestCount > 0 ? `New Test (${newTestCount})` : "New Test";
+
+            return [
+                ...prevTests,
+                {
+                    id: String(prevTests.length + 1),
+                    title,
+                    steps: [],
+                    status: "disabled",
+                },
+            ];
+        });
+    };
+
     return (
         <>
             <div className="flex flex-col gap-y-4 p-4 pt-6">
@@ -67,26 +76,25 @@ export function AllSidePanel({
                 </div>
             </div>
 
-            <div className="flex flex-1 flex-col">
-                {TEST_CARDS.map((testCard, index) => (
-                    <TestCard
-                        key={index}
-                        {...testCard}
-                        handleTestClick={handleTestClick}
-                    />
-                ))}
-            </div>
+            <ScrollArea className="flex max-h-[calc(100%-260px)] flex-1 flex-col">
+                <AnimatePresence initial={false}>
+                    {tests.map((testCard) => (
+                        <TestCard
+                            key={testCard.id}
+                            {...testCard}
+                            handleTestClick={handleTestClick}
+                        />
+                    ))}
+                </AnimatePresence>
+            </ScrollArea>
 
             <div className="ring-o-outline mx-4 mb-4 mt-auto flex flex-row items-center justify-between rounded-md p-2 ring-1">
-                <PlusSquareIcon className="text-o-muted size-5" />
+                <PlusSquareIcon
+                    className="text-o-muted size-5 hover:cursor-pointer"
+                    onClick={handleAddTest}
+                />
 
                 <div className="flex flex-row gap-x-2">
-                    {/* <Button
-                                variant={"ghost"}
-                                className="hover:bg-inherit hover:text-inherit"
-                            >
-                                Edit
-                            </Button> */}
                     <Button variant={"destructive"}>Run All Tests</Button>
                 </div>
             </div>

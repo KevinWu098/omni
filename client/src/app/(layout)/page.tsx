@@ -1,4 +1,4 @@
-import { Content } from "@/components/ui/builder/content";
+import { Content } from "@/components/content";
 
 export default function Page() {
     return <Content />;

@@ -14,6 +14,30 @@ from PIL import Image
 from flask import Flask, request, Response
 from werkzeug.serving import make_server
 from playwright.async_api import async_playwright
+import av  # Requires python-av
+from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
+
+# Globals for WebRTC streaming
+LATEST_FRAME = None  # holds the most recent captured frame
+pcs = set()  # active peer connections
+MAIN_LOOP = None  # will hold the main asyncio event loop
+
+# WebRTC video track for low-latency live streaming
+class ScreenTrack(VideoStreamTrack):
+    def __init__(self):
+        super().__init__()
+
+    async def recv(self):
+        global LATEST_FRAME
+        # Wait until a frame is available
+        while LATEST_FRAME is None:
+            await asyncio.sleep(0.01)
+        pts, time_base = await self.next_timestamp()
+        frame = LATEST_FRAME
+        video_frame = av.VideoFrame.from_ndarray(frame, format='rgb24')
+        video_frame.pts = pts
+        video_frame.time_base = time_base
+        return video_frame
 
 # ── config ──────────────────────────────────────────────────────────────
 HOST, PORT = "127.0.0.1", 5000
@@ -118,6 +142,10 @@ class Recorder:
                 np.uint8,
             )
 
+            # Update global latest frame for WebRTC
+            global LATEST_FRAME
+            LATEST_FRAME = rgb
+
             try:
                 self.proc.stdin.write(rgb.tobytes())
             except BrokenPipeError:
@@ -150,15 +178,19 @@ video::-webkit-media-controls-buffering-indicator {display: none !important;}
 </style></head><body>
 <div id="bar">
   <button id="live">LIVE</button><span id="lat"></span>
+  <span id="webrtcStatus" style="margin-left:8px;color:#0f0;display:none;">webrtc: connecting</span>
   <div id="timeInfo"></div>
 </div>
-<video id="v" playsinline muted autoplay controls style="width:100%"></video>
+<video id="hlsVideo" playsinline muted autoplay controls style="width:100%"></video>
+<video id="webrtcVideo" autoplay muted playsinline style="width:100%;display:none;"></video>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script>
 let live = true;
-const v   = document.getElementById('v');
+const hlsVideo = document.getElementById('hlsVideo');
+const webrtcVideo = document.getElementById('webrtcVideo');
 const btn = document.getElementById('live');
 const timeInfo = document.getElementById('timeInfo');
+const statusSpan = document.getElementById('webrtcStatus');
 const hls = new Hls({ 
   lowLatencyMode: true, 
   liveSyncDurationCount: 1,
@@ -167,13 +199,10 @@ const hls = new Hls({
   liveMaxLatencyNum: 1
 });
 
-hls.loadSource('/playlist.m3u8');
-hls.attachMedia(v);
-
 // Function to update time display
 function updateTimeDisplay() {
-  const currentTime = v.currentTime || 0;
-  const duration = v.duration || 0;
+  const currentTime = hlsVideo.currentTime || 0;
+  const duration = hlsVideo.duration || 0;
   
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -190,12 +219,30 @@ function updateTimeDisplay() {
 
 // Function to toggle live mode UI
 function toggleLiveModeUI() {
+  console.log("toggleLiveModeUI live=", live);
+  statusSpan.style.display = live ? '' : 'none';
   if (live) {
+    hls.stopLoad();
+    hls.detachMedia();
     document.body.classList.add('live-mode');
-    v.removeAttribute('controls');
+    hlsVideo.style.display = 'none';
+    hlsVideo.removeAttribute('controls');
+    webrtcVideo.style.display = '';
+    startWebRTC();
   } else {
     document.body.classList.remove('live-mode');
-    v.setAttribute('controls', '');
+    webrtcVideo.style.display = 'none';
+    webrtcVideo.srcObject = null;
+    hlsVideo.style.display = '';
+    hlsVideo.setAttribute('controls', '');
+    hls.loadSource('/playlist.m3u8');
+    hls.attachMedia(hlsVideo);
+    // Reset WebRTC connection and status
+    if (pc) {
+      try { pc.close(); } catch(e) { console.error("Error closing PC on DVR toggle", e); }
+      pc = null;
+    }
+    statusSpan.textContent = '';
   }
   updateTimeDisplay();
 }
@@ -205,22 +252,22 @@ function enforceLiveMode() {
   if (!live) return;
   
   // Always seek to the absolute latest frame
-  const duration = v.duration;
+  const duration = hlsVideo.duration;
   if (duration && duration > 0) {
     // Use HLS.js liveSyncPosition for most accurate live position
     const livePos = hls.liveSyncPosition;
     if (livePos !== null && livePos > 0) {
       // Always seek to live position, regardless of current position
-      v.currentTime = livePos;
+      hlsVideo.currentTime = livePos;
     } else {
       // Fallback: seek to absolute end
-      v.currentTime = duration;
+      hlsVideo.currentTime = duration;
     }
   }
   
   // Force play if paused
-  if (v.paused) {
-    v.play().catch(() => {}); // Ignore errors
+  if (hlsVideo.paused) {
+    hlsVideo.play().catch(() => {}); // Ignore errors
   }
 }
 
@@ -228,13 +275,11 @@ btn.onclick = () => {
   live = !live; 
   btn.textContent = live ? 'LIVE' : 'DVR';
   toggleLiveModeUI();
-  if (live) {
+  if (!live) {
+    // when switching back to DVR, sync HLS to live
     enforceLiveMode();
   }
 };
-
-// Initialize UI
-toggleLiveModeUI();
 
 // Multiple event handlers to ensure live mode stays active
 hls.on(Hls.Events.LEVEL_UPDATED, () => {
@@ -246,18 +291,18 @@ hls.on(Hls.Events.FRAG_LOADED, () => {
 });
 
 // Prevent pausing in live mode
-v.addEventListener('pause', () => {
+hlsVideo.addEventListener('pause', () => {
   if (live) {
     setTimeout(() => {
-      if (live && v.paused) {
-        v.play().catch(() => {});
+      if (live && hlsVideo.paused) {
+        hlsVideo.play().catch(() => {});
       }
     }, 10);
   }
 });
 
 // Prevent seeking in live mode
-v.addEventListener('seeking', () => {
+hlsVideo.addEventListener('seeking', () => {
   if (live) {
     setTimeout(() => {
       if (live) {
@@ -282,7 +327,72 @@ setInterval(() => {
   const lat = hls.latency !== undefined ? hls.latency.toFixed(2) : '-';
   document.getElementById('lat').textContent = ' ' + lat + ' s';
 }, 500);
-</script></body></html>
+</script>
+<script>
+// WebRTC setup for live
+let pc = null;
+const status = document.getElementById('webrtcStatus');
+async function startWebRTC() {
+  console.log("startWebRTC called");
+  if (pc) {
+    try { pc.close(); } catch(e) { console.error("Error closing old PC", e); }
+  }
+  pc = new RTCPeerConnection({iceServers: []});
+  status.textContent = 'webrtc: connecting';
+  console.log("RTCPeerConnection created", pc);
+  pc.onicecandidate = event => {
+    if (event.candidate) console.log("ICE candidate", event.candidate);
+  };
+  pc.onconnectionstatechange = () => {
+    console.log("Connection state:", pc.connectionState);
+    if (status) {
+      status.textContent = 'webrtc: ' + pc.connectionState;
+    }
+    if (['disconnected','failed','closed'].includes(pc.connectionState)) {
+      console.warn("WebRTC connection state is", pc.connectionState, "-- retrying in 2s");
+      setTimeout(startWebRTC, 2000);
+    }
+  };
+  pc.ontrack = (event) => {
+    console.log("ontrack event:", event);
+    webrtcVideo.srcObject = event.streams[0];
+    try {
+      const playPromise = webrtcVideo.play();
+      if (playPromise instanceof Promise) {
+        playPromise.catch(e => console.error("webrtcVideo play error", e));
+      }
+    } catch(e) {
+      console.error("webrtcVideo play invocation error", e);
+    }
+  };
+  const offer = await pc.createOffer({offerToReceiveVideo: true});
+  console.log("Offer SDP generated");
+  await pc.setLocalDescription(offer);
+  console.log("Local SDP set, sending to server");
+  try {
+    const response = await fetch('/offer', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sdp: pc.localDescription.sdp, type: pc.localDescription.type})
+    });
+    console.log("fetch /offer status", response.status);
+    const data = await response.json();
+    console.log("Server SDP answer", data);
+    if (!response.ok || data.error) {
+      console.error('WebRTC offer error', data.error || data);
+      return;
+    }
+    await pc.setRemoteDescription(data);
+    console.log("Remote SDP set");
+  } catch (e) {
+    console.error("startWebRTC error", e);
+  }
+}
+
+// Initialize UI after WebRTC setup
+toggleLiveModeUI();
+</script>
+</body></html>
 """
 
     # index
@@ -311,12 +421,52 @@ setInterval(() => {
         data = STORE.get_segment(name)
         return Response(data, mimetype="video/mp2t") if data else ("", 404)
 
+    # serve missing favicon to avoid browser 404
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204
+
+    # WebRTC offer signaling endpoint
+    @app.route('/offer', methods=['POST'])
+    def offer():
+        params = request.get_json()
+        offer_desc = RTCSessionDescription(sdp=params['sdp'], type=params['type'])
+        try:
+            # Perform SDP negotiation on main loop
+            async def handle_offer():
+                pc = RTCPeerConnection()
+                pcs.add(pc)
+                @pc.on('iceconnectionstatechange')
+                async def on_icestatechange():
+                    if pc.iceConnectionState == 'failed':
+                        await pc.close()
+                        pcs.discard(pc)
+                pc.addTrack(ScreenTrack())
+                await pc.setRemoteDescription(offer_desc)
+                answer = await pc.createAnswer()
+                await pc.setLocalDescription(answer)
+                # Wait for ICE gathering
+                while pc.iceGatheringState != 'complete':
+                    await asyncio.sleep(0.1)
+                return pc.localDescription
+
+            # Schedule negotiation in the main event loop
+            assert MAIN_LOOP is not None, "Main event loop is not initialized"
+            future = asyncio.run_coroutine_threadsafe(handle_offer(), MAIN_LOOP)
+            answer = future.result(timeout=30)
+            return {'sdp': answer.sdp, 'type': answer.type}
+        except Exception as e:
+            import traceback; traceback.print_exc()
+            return {'error': str(e)}, 500
+
     return app
 
 # ════════════════════════════════════════════════════════════════════════
 #  Orchestrator
 # ════════════════════════════════════════════════════════════════════════
 async def main():
+    global MAIN_LOOP
+    MAIN_LOOP = asyncio.get_running_loop()
     # Flask
     httpd = make_server(HOST, PORT, create_app(), threaded=True)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
@@ -344,3 +494,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
