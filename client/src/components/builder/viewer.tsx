@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video } from "@/components/ui/video";
+import { VideoPlayer } from "@/components/ui/video";
 import { PRData } from "@/lib/github";
 import { EventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
@@ -181,7 +181,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                 </div>
 
                 {runId ? (
-                    <Video runId={runId} />
+                    <VideoPlayer runId={runId} />
                 ) : (
                     <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
                         No run ID

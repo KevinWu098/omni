@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
@@ -26,9 +26,29 @@ interface ContentProps {
     prData?: PRData | null;
 }
 
+const defaultRunId = "d5b395a1-2097-4f8a-b919-7f552f1e7b61";
+
 export function Content({ prData }: ContentProps) {
-    const [runId, setRunId] = useState<string | null>(null);
-    const { eventData, sendCommand } = useCommandStream({ setRunId });
+    const [runId, setRunId] = useQueryState<string | null>("run_id", {
+        defaultValue: defaultRunId,
+        parse: (value: unknown): string | null => {
+            return typeof value === "string" ? value : null;
+        },
+        history: "replace", // Use replace to avoid adding to history
+    });
+    useEffect(() => {
+        if (!runId) {
+            setRunId(defaultRunId);
+        } else {
+            const url = new URL(window.location.href);
+            url.searchParams.set("run_id", runId);
+            window.history.replaceState({}, "", url.toString());
+        }
+    }, [runId, setRunId]);
+
+    const { eventData, sendCommand } = useCommandStream({
+        setRunId,
+    });
 
     const [activeSidebar] = useQueryState<"test-builder" | "test-runner">(
         "mode",
@@ -46,11 +66,27 @@ export function Content({ prData }: ContentProps) {
             title: "Navigate to .parse() documentation",
             steps: [
                 {
-                    title: "Navigate to .parse() documentation",
+                    title: "Navigate to peterportal.org",
                     image: "IMAGE",
                 },
                 {
-                    title: "Click first heading",
+                    title: "Press the x on the pop-up, only if there is one",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Click on the 'Professors' tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Search for professor 'Shindler'",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Click on Shindler's name",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Scroll down to the first Review",
                     image: "IMAGE",
                 },
             ],
@@ -79,7 +115,7 @@ export function Content({ prData }: ContentProps) {
             return;
         }
 
-        sendCommand(commands?.join("\n"));
+        sendCommand(commands?.join("\n"), defaultRunId);
     };
 
     return (
