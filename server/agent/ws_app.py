@@ -15,9 +15,9 @@ WS_SERVER_URL = os.getenv("WS_SERVER_URL")
 if not WS_SERVER_URL:
     raise ValueError("Missing WS_SERVER_URL environment variable")
 
-AGENT_ID = os.getenv("AGENT_ID")
-if not AGENT_ID:
-    raise ValueError("Missing AGENT_ID environment variable")
+VM_ID = os.getenv("VM_ID")
+if not VM_ID:
+    raise ValueError("Missing VM_ID environment variable")
 
 
 def _run_nl_command(command: str) -> asyncio.Future:
@@ -76,8 +76,8 @@ async def listen():
     )
     logging.info("Connecting to WS server at %s", WS_SERVER_URL)
     async with websockets.connect(WS_SERVER_URL) as ws:
-        # Register as agent
-        register_msg = {"type": "register", "role": "agent", "agent_id": AGENT_ID}
+        # Register as VM
+        register_msg = {"type": "register", "role": "vm", "vm_id": VM_ID}
         await ws.send(json.dumps(register_msg))
         logging.info("Sent registration message: %s", register_msg)
 
@@ -100,7 +100,6 @@ async def listen():
                     result = await _run_nl_command(command)
                     response = {
                         "type": "command_response",
-                        "agent_id": AGENT_ID,
                         "result": result,
                     }
                     await ws.send(json.dumps(response))
@@ -108,7 +107,6 @@ async def listen():
                 except Exception as e:
                     error_msg = {
                         "type": "error",
-                        "agent_id": AGENT_ID,
                         "message": str(e),
                     }
                     await ws.send(json.dumps(error_msg))
@@ -120,7 +118,6 @@ async def listen():
                     screenshot = await _take_screenshot(full_page)
                     response = {
                         "type": "screenshot_response",
-                        "agent_id": AGENT_ID,
                         "screenshot": screenshot,
                     }
                     await ws.send(json.dumps(response))
@@ -128,7 +125,6 @@ async def listen():
                 except Exception as e:
                     error_msg = {
                         "type": "error",
-                        "agent_id": AGENT_ID,
                         "message": str(e),
                     }
                     await ws.send(json.dumps(error_msg))
@@ -142,4 +138,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(listen())
     except KeyboardInterrupt:
-        logging.info("Agent WS client shutting down")
+        logging.info("VM WS client shutting down")
