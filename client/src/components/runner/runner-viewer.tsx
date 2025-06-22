@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Chip } from "@/components/chip";
-import { CommentCard } from "@/components/comment-card";
 import { Timeline } from "@/components/timeline";
-import { Button } from "@/components/ui/button";
 import {
     ResizableHandle,
     ResizablePanel,
@@ -15,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoPlayer } from "@/components/ui/video";
 import { EventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
-import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
 
 interface ViewerProps {
     eventData?: EventData[];
@@ -23,7 +19,7 @@ interface ViewerProps {
 }
 
 export function RunnerViewer({ eventData, runId }: ViewerProps) {
-    const [activeTab, setActiveTab] = useState<"timeline">("timeline");
+    const [activeTab, setActiveTab] = useState<"timeline" | "logs">("timeline");
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -69,10 +65,19 @@ export function RunnerViewer({ eventData, runId }: ViewerProps) {
                 </div>
 
                 {runId ? (
-                    <VideoPlayer
-                        mode={mode}
-                        runId={runId}
-                    />
+                    <div className="grid max-h-[calc(100%-32px)] grid-cols-4 grid-rows-4 gap-1 p-4">
+                        {Array(16)
+                            .fill(null)
+                            .map((_, i) => (
+                                <div key={i}>
+                                    <VideoPlayer
+                                        mode={mode}
+                                        runId={runId}
+                                        multiple={true}
+                                    />
+                                </div>
+                            ))}
+                    </div>
                 ) : (
                     <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
                         No run ID
@@ -91,7 +96,9 @@ export function RunnerViewer({ eventData, runId }: ViewerProps) {
             >
                 <Tabs
                     value={activeTab}
-                    onValueChange={(value) => setActiveTab(value as "timeline")}
+                    onValueChange={(value) =>
+                        setActiveTab(value as "timeline" | "logs")
+                    }
                     className="h-full"
                 >
                     <TabsList className="bg-o-background h-fit w-full justify-start rounded-none p-0">
@@ -120,6 +127,44 @@ export function RunnerViewer({ eventData, runId }: ViewerProps) {
                     >
                         <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
                             <Timeline />
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent
+                        value="logs"
+                        className="mt-0 h-full"
+                    >
+                        <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
+                            {eventData?.length ? (
+                                <ScrollArea ref={scrollAreaRef}>
+                                    {eventData.map((event, index) => {
+                                        if (event && event.type === "log") {
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="font-mono"
+                                                    ref={
+                                                        index ===
+                                                        eventData.length - 1
+                                                            ? scrollAreaRef
+                                                            : null
+                                                    }
+                                                >
+                                                    &gt;
+                                                    {event.content
+                                                        .split("]")
+                                                        .at(1)}
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </ScrollArea>
+                            ) : (
+                                <div className="text-o-primary my-auto flex h-full items-center justify-center">
+                                    Agent logs will display here.
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>

@@ -3,19 +3,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_URL } from "@/lib/globals";
+import { cn } from "@/lib/utils";
 import Hls from "hls.js";
 import { Loader2Icon } from "lucide-react";
 
 export interface VideoPlayerProps {
     mode: "live" | "dvr";
     runId: string;
+    multiple?: boolean;
 }
 
 /**
  * VideoPlayer component that supports both WebRTC (live) and HLS (DVR) playback modes.
  * WebRTC is used for low-latency live streaming, while HLS provides DVR capabilities.
  */
-export function VideoPlayer({ mode, runId }: VideoPlayerProps) {
+export function VideoPlayer({ mode, multiple, runId }: VideoPlayerProps) {
     // State for tracking playback mode and status
     const [live, setLive] = useState(mode === "live");
     const [webrtcStatus, setWebrtcStatus] = useState("");
@@ -292,9 +294,19 @@ export function VideoPlayer({ mode, runId }: VideoPlayerProps) {
     if (!runId) return <p className="text-white">Missing run_id</p>;
 
     return (
-        <div className="bg-o-background relative h-[calc(100%-32px)] select-none text-white">
+        <div
+            className={cn(
+                "bg-o-background relative h-[calc(100%-32px)] select-none text-white",
+                multiple && "my-auto flex h-full items-center justify-center"
+            )}
+        >
             {/* Video container */}
-            <div className="relative h-[calc(100%-28px)]">
+            <div
+                className={cn(
+                    "relative h-[calc(100%-28px)]",
+                    multiple && "h-full"
+                )}
+            >
                 {/* Loading state */}
                 {isLoading && (
                     <div className="bg-o-background/80 absolute inset-0 flex items-center justify-center">
@@ -309,7 +321,11 @@ export function VideoPlayer({ mode, runId }: VideoPlayerProps) {
                     autoPlay
                     muted
                     controls={!live}
-                    className={`aspect-video h-full w-full ${live ? "hidden" : ""}`.trim()}
+                    className={cn(
+                        "aspect-video h-full w-full",
+                        live && "hidden",
+                        multiple && "w-fit max-w-fit"
+                    )}
                 />
 
                 {/* WebRTC video for live mode */}
@@ -318,11 +334,15 @@ export function VideoPlayer({ mode, runId }: VideoPlayerProps) {
                     autoPlay
                     muted
                     playsInline
-                    className={`pointer-events-none aspect-video h-full w-full ${live ? "" : "hidden"}`.trim()}
+                    className={cn(
+                        "pointer-events-none aspect-video h-full w-full",
+                        !live && "hidden",
+                        multiple && "w-fit max-w-fit"
+                    )}
                 />
             </div>
 
-            {live && (
+            {!multiple && live && (
                 <>
                     <div className="bg-o-red text-o-white absolute bottom-6 left-4 w-fit rounded-sm px-2 py-1 text-xs uppercase">
                         Live
