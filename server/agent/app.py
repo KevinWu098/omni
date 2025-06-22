@@ -25,10 +25,16 @@ def diag():
 def run_command():
 
     data = request.get_json(force=True)
-    command = data.get("command")
+    url = data.get("url")
+    commands = data.get("commands")
 
-    if not command:
-        return jsonify({"error": "Missing 'command' in JSON body"}), 400
+    if not commands:
+        return jsonify({"error": "Missing 'commands' in JSON body"}), 400
+
+    if not url:
+        return jsonify({"error": "Missing 'url' in JSON body"}), 400
+
+    commands.insert(0, f"Navigate to '{url}'")
 
     run_id = data.get(
         "run_id", None
@@ -59,6 +65,8 @@ def run_command():
             # Ensure the service is not marked as done if it's being reused
             service.done = False
 
+    print("Showing commands: ", commands)
+
     def generate():
         try:
             # Stream the unique run ID as the first message
@@ -66,7 +74,7 @@ def run_command():
             # Ensure recorder is running
             asyncio.run_coroutine_threadsafe(service.recorder.start(), service.loop).result()
             # Stream logs and results
-            for log_data in service.run_command_streaming(command):
+            for log_data in service.run_command_streaming(commands):
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
@@ -97,7 +105,7 @@ def run_command():
 @app.route("/shutdown_run/<run_id>", methods=["POST"])
 def shutdown_run(run_id):
     data = request.get_json(force=True)
-    if (data.get("delete_video", False)):
+    if data.get("delete_video", False):
         service = agents.pop(run_id, None)
     else:
         service = agents.get(run_id)
