@@ -247,10 +247,7 @@ def make_pr():
     {
         "github_url": "https://github.com/owner/repo",
         "issue_description": "Description of the issue to fix",
-        "pr_title": "Optional custom PR title",
-        "pr_body": "Optional custom PR body",
-        "source_branch": "Optional branch to clone from (default: main)",
-        "target_branch": "Optional branch to create PR against (default: main)",
+        "branch": "Optional branch to work with (default: main)",
         "cleanup": true
     }
     """
@@ -258,10 +255,7 @@ def make_pr():
     
     github_url = data.get("github_url")
     issue_description = data.get("issue_description")
-    pr_title = data.get("pr_title")
-    pr_body = data.get("pr_body")
-    source_branch = data.get("source_branch")
-    target_branch = data.get("target_branch")
+    branch = data.get("branch")
     cleanup = data.get("cleanup", True)
     
     if not github_url:
@@ -282,10 +276,7 @@ def make_pr():
                 prompt=issue_description,
                 git_url=github_url,
                 cleanup=cleanup,
-                pr_title=pr_title,
-                pr_body=pr_body,
-                source_branch=source_branch,
-                target_branch=target_branch
+                branch=branch
             ):
                 yield progress_update
             
