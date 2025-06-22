@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AllSidePanel } from "@/components/ui/builder/all-side-panel";
-import { SingleSidePanel } from "@/components/ui/builder/single/single-side-panel";
-import { Step } from "@/components/ui/builder/single/step";
-import { Viewer } from "@/components/ui/builder/viewer";
+import { AllSidePanel } from "@/components/builder/all-side-panel";
+import { SingleSidePanel } from "@/components/builder/single/single-side-panel";
+import { Step } from "@/components/builder/single/step";
+import { Viewer } from "@/components/builder/viewer";
 
 export type Step = {
     title: string | null;

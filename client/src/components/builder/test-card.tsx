@@ -1,4 +1,4 @@
-import { type Test } from "@/components/ui/builder/content";
+import { type Test } from "@/components/builder/content";
 import { cn } from "@/lib/utils";
 
 type TestCardProps = Test & {
