@@ -29,7 +29,7 @@ interface ContentProps {
     prData?: PRData | null;
 }
 
-const defaultRunId = "d5b395a1-2097-4f8a-b919-7f552f1e7b61";
+const defaultRunId = "";
 
 export function Content({ prData }: ContentProps) {
     const [runId, setRunId] = useQueryState<string | null>("run_id", {
@@ -116,7 +116,7 @@ export function Content({ prData }: ContentProps) {
             return;
         }
 
-        sendCommand(commands, undefined);
+        sendCommand(commands, undefined, "0");
     };
 
     return (
@@ -182,10 +182,7 @@ export function Content({ prData }: ContentProps) {
                                 runId={runId}
                             />
                         ) : (
-                            <RunnerViewer
-                                runId={runId}
-                                eventData={eventData}
-                            />
+                            <RunnerViewer />
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -206,7 +203,7 @@ export function Content({ prData }: ContentProps) {
                         <motion.div
                             key="test-runner-sidebar"
                             className="h-full"
-                            initial={{ x: 300, opacity: 0 }}
+                            // initial={{ x: 300, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: 300, opacity: 0 }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
