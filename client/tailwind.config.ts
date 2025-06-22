@@ -71,6 +71,7 @@ const config: Config = {
                     primary: "#FFC926",
                     green: "#6DE848",
                     red: "#F13837",
+                    blue: "#6096DC",
                     claudeGray: "#C2C0B6",
                 },
             },
