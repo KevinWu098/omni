@@ -148,6 +148,11 @@ export function Content({ prData }: ContentProps) {
         },
     ]);
     const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+    const [runnerStats, setRunnerStats] = useState({
+        successCount: 0,
+        failureCount: 0,
+        isRunning: false
+    });
 
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
@@ -263,7 +268,16 @@ export function Content({ prData }: ContentProps) {
                                 updateTestUrl={handleUpdateTestUrl}
                             />
                         ) : (
-                            <RunnerViewer tests={tests} />
+                            <RunnerViewer 
+                                tests={tests} 
+                                onStatusUpdate={(completed, failed, isRunning) => 
+                                    setRunnerStats({ 
+                                        successCount: completed - failed, 
+                                        failureCount: failed, 
+                                        isRunning 
+                                    })
+                                }
+                            />
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -296,6 +310,9 @@ export function Content({ prData }: ContentProps) {
                                 <RunnerSidebar
                                     totalTests={tests.length}
                                     instances={Object.keys(eventData).length}
+                                    successCount={runnerStats.successCount}
+                                    failureCount={runnerStats.failureCount}
+                                    isRunning={runnerStats.isRunning}
                                 />
                             </SidebarWrapper>
                         </motion.div>
