@@ -6,9 +6,9 @@ import { HourglassIcon } from "lucide-react";
 export function RunnerSidebar() {
     return (
         <>
-            <div className="flex flex-col gap-y-4 p-4 pt-6">
+            <div className="flex flex-col gap-y-4 px-2 py-6">
                 <div className="flex flex-row items-start justify-between">
-                    <div className="flex flex-row gap-10">
+                    <div className="flex flex-row gap-10 px-4">
                         <BigText
                             label="Total Tests"
                             value="27"
@@ -19,13 +19,13 @@ export function RunnerSidebar() {
                         />
                     </div>
 
-                    <div className="text-o-white flex flex-row items-center gap-x-1">
+                    <div className="flex flex-row items-center gap-x-1 px-4 text-o-white">
                         <span className="text-sm">Running</span>
-                        <HourglassIcon className="text-o-green size-4 animate-pulse" />
+                        <HourglassIcon className="size-4 animate-pulse text-o-green" />
                     </div>
                 </div>
 
-                <div className="flex flex-row gap-10">
+                <div className="flex flex-row gap-10 px-4">
                     <MediumText
                         label="Success"
                         value="2"
@@ -49,7 +49,7 @@ export function RunnerSidebar() {
                 </div>
             </div>
 
-            <div className="border-o-background box-border flex flex-col gap-y-4 border-t-2 p-4">
+            <div className="box-border flex flex-col gap-y-4 border-t-2 border-o-background p-4">
                 <AgentCard />
                 <AgentCard />
                 <AgentCard />

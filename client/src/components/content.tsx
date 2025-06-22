@@ -120,7 +120,7 @@ export function Content({ prData }: ContentProps) {
     };
 
     return (
-        <div className="bg-o-background flex h-full flex-row">
+        <div className="flex h-full flex-row bg-o-background">
             <motion.div
                 className="h-full"
                 initial={{
@@ -194,10 +194,10 @@ export function Content({ prData }: ContentProps) {
             <motion.div
                 className="h-full min-h-full"
                 initial={{
-                    width: activeSidebar === "test-runner" ? "400px" : 0,
+                    width: activeSidebar === "test-runner" ? "480px" : 0,
                 }}
                 animate={{
-                    width: activeSidebar === "test-runner" ? "400px" : 0,
+                    width: activeSidebar === "test-runner" ? "480px" : 0,
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
             >
