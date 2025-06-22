@@ -113,12 +113,20 @@ class AgentService:
             while True:
                 try:
                     log_msg = self.log_queue.get(timeout=0.1)
+                    # Early detect failure directly from log messages
                     if log_msg == "__COMMAND_COMPLETE__":
                         # Get the final result
                         result = self.log_queue.get(timeout=0.1)
                         yield f"data: {{'type': 'result', 'content': '{result}'}}\n\n"
+                        # If the result indicates failure, stop processing further commands
+                        if "task completed without success" in result.lower():
+                            return
                         break
                     else:
+                        # Only stop on the explicit failure phrase
+                        if "task completed without success" in log_msg.lower():
+                            yield f"data: {{'type': 'log', 'content': '{log_msg}'}}\n\n"
+                            return
                         yield f"data: {{'type': 'log', 'content': '{log_msg}'}}\n\n"
                 except queue.Empty:
                     if future.done():
