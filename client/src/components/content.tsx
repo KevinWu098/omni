@@ -5,6 +5,7 @@ import { BuilderSidebar } from "@/components/builder/builder-sidebar";
 import { Step } from "@/components/builder/single/step";
 import { Viewer } from "@/components/builder/viewer";
 import { RunnerSidebar } from "@/components/runner/runner-sidebar";
+import { RunnerViewer } from "@/components/runner/runner-viewer";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { PRData } from "@/lib/github";
 import { useCommandStream } from "@/lib/hooks/use-command-stream";
@@ -133,12 +134,19 @@ export function Content({ prData }: ContentProps) {
                 />
             </SidebarWrapper>
 
-            <Viewer
-                prData={prData}
-                eventData={eventData}
-                activeTest={activeTest}
-                runId={runId}
-            />
+            {activeSidebar === "test-builder" ? (
+                <Viewer
+                    prData={prData}
+                    eventData={eventData}
+                    activeTest={activeTest}
+                    runId={runId}
+                />
+            ) : (
+                <RunnerViewer
+                    runId={runId}
+                    eventData={eventData}
+                />
+            )}
 
             <SidebarWrapper
                 title="Summary"
