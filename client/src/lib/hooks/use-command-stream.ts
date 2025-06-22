@@ -5,6 +5,11 @@ import { toast } from "sonner";
 export type EventData = {
     type: string;
     content: string;
+    streamId?: string;
+};
+
+export type StreamsEventData = {
+    [streamId: string]: EventData[];
 };
 
 export function useCommandStream({
@@ -12,16 +17,21 @@ export function useCommandStream({
 }: {
     setRunId: (runId: string) => void;
 }) {
-    const [eventData, setEventData] = useState<EventData[]>([]);
+    const [eventData, setEventData] = useState<StreamsEventData>({});
 
-    const sendCommand = async (commands: string[], id: string | undefined) => {
+    const sendCommand = async (
+        command: string[],
+        id: string | undefined,
+        streamId: string
+    ) => {
+        console.log("Sending command", command, id, streamId);
         try {
             const response = await fetch(`${BACKEND_URL}/run_command`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ commands, run_id: id }),
+                body: JSON.stringify({ commands: command, run_id: id }),
             });
 
             if (!response.ok) {
@@ -71,8 +81,14 @@ export function useCommandStream({
                         const eventData = {
                             type: typeMatch[1],
                             content: contentMatch[1],
+                            streamId,
                         };
-                        setEventData((prev) => [...prev, eventData]);
+
+                        console.log("NEW DATA", streamId, eventData);
+                        setEventData((prev) => ({
+                            ...prev,
+                            [streamId]: [...(prev[streamId] || []), eventData],
+                        }));
                     } else {
                         console.log("Failed to parse:", item);
                         toast.warning("Error parsing event data");
@@ -87,6 +103,12 @@ export function useCommandStream({
     return {
         eventData,
         sendCommand,
-        clearEvents: () => setEventData([]),
+        clearEvents: () => setEventData({}),
+        clearStreamEvents: (streamId: string) =>
+            setEventData((prev) => {
+                const newData = { ...prev };
+                delete newData[streamId];
+                return newData;
+            }),
     };
 }

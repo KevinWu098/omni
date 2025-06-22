@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoPlayer } from "@/components/ui/video";
 import { PRData } from "@/lib/github";
-import { EventData } from "@/lib/hooks/use-command-stream";
+import { EventData, StreamsEventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
 
@@ -59,7 +59,7 @@ const sampleComments = [
 
 interface ViewerProps {
     prData?: PRData | null;
-    eventData?: EventData[];
+    eventData?: StreamsEventData;
     activeTest: Test | undefined;
     runId: string | null;
 }
@@ -325,15 +325,19 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         <div className="box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
                             {eventData?.length ? (
                                 <ScrollArea ref={scrollAreaRef}>
-                                    {eventData.map((event, index) => {
+                                    {eventData["0"]?.map((event, index) => {
                                         if (event && event.type === "log") {
                                             return (
                                                 <div
                                                     key={index}
                                                     className="font-mono"
                                                     ref={
+                                                        eventData["0"]
+                                                            ?.length &&
                                                         index ===
-                                                        eventData.length - 1
+                                                            eventData["0"]
+                                                                ?.length -
+                                                                1
                                                             ? scrollAreaRef
                                                             : null
                                                     }
