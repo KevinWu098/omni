@@ -151,6 +151,8 @@ export function Content({ prData }: ContentProps) {
                                     setTests={setTests}
                                     setSelectedTest={setSelectedTest}
                                     handleRunTest={handleRunTest}
+                                    runId={runId}
+                                    sendCommand={sendCommand}
                                 />
                             </SidebarWrapper>
                         </motion.div>

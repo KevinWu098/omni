@@ -14,12 +14,16 @@ export function SingleSidePanel({
     setTests,
     setSelectedTest,
     handleRunTest,
+    runId,
+    sendCommand,
 }: {
     activeTest: Test;
     tests: Test[];
     setTests: React.Dispatch<React.SetStateAction<Test[]>>;
     setSelectedTest: React.Dispatch<React.SetStateAction<Test | null>>;
     handleRunTest: () => void;
+    runId: string | null;
+    sendCommand: (commands: string[], id: string | undefined) => Promise<void>;
 }) {
     const [creatingStep, setCreatingStep] = useState<boolean>(false);
 
@@ -39,6 +43,8 @@ export function SingleSidePanel({
             )
         );
         setCreatingStep(true);
+
+        
     };
 
     const handleSaveStep = () => {
@@ -47,6 +53,11 @@ export function SingleSidePanel({
 
         if (lastStep?.title) {
             setCreatingStep(false);
+            
+            // Execute the newly added step using the existing runId session
+            if (runId && lastStep.title) {
+                sendCommand([lastStep.title], runId);
+            }
         }
     };
 

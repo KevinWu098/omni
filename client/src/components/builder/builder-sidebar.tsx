@@ -8,12 +8,16 @@ export function BuilderSidebar({
     setTests,
     setSelectedTest,
     handleRunTest,
+    runId,
+    sendCommand,
 }: {
     activeTest: Test | undefined;
     tests: Test[];
     setTests: React.Dispatch<React.SetStateAction<Test[]>>;
     setSelectedTest: React.Dispatch<React.SetStateAction<Test | null>>;
     handleRunTest: () => void;
+    runId: string | null;
+    sendCommand: (commands: string[], id: string | undefined) => Promise<void>;
 }) {
     const handleTestClick = (test: Test) => {
         setSelectedTest(test);
@@ -26,6 +30,8 @@ export function BuilderSidebar({
             setTests={setTests}
             setSelectedTest={setSelectedTest}
             handleRunTest={handleRunTest}
+            runId={runId}
+            sendCommand={sendCommand}
         />
     ) : (
         <AllSidePanel
