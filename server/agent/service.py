@@ -25,6 +25,8 @@ class StreamingLogHandler(logging.Handler):
   
 class AgentService:  
     def __init__(self):  
+        # Flag to indicate agent completion status
+        self.done = False
         self.log_queue = queue.Queue()  
         self.streaming_handler = None  
         self.loop = asyncio.new_event_loop()  
