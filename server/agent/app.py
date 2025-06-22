@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, Response, stream_with_context
 from dotenv import load_dotenv
 import json
-import uuid
 
 from service import AgentService
 
@@ -9,27 +8,15 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Store AgentService instances by agent ID
-AGENTS = {}
 
-@app.route("/agents", methods=["POST"])
-def create_agent():
-    # Generate a unique agent ID
-    agent_id = str(uuid.uuid4())
-    # Initialize and store the AgentService instance
-    AGENTS[agent_id] = AgentService()
-    return jsonify({"id": agent_id}), 201
-
-@app.route("/agents/<agent_id>/run_command", methods=["POST"])
-def run_command(agent_id):
+@app.route("/run_command", methods=["POST"])
+def run_command():
     data = request.get_json(force=True)
     command = data.get("command")
     if not command:
         return jsonify({"error": "Missing 'command' in JSON body"}), 400
 
-    service = AGENTS.get(agent_id)
-    if not service:
-        return jsonify({"error": "Unknown agent"}), 404
+    service = AgentService()
 
     def generate():
         try:

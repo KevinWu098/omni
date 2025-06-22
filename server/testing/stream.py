@@ -365,15 +365,18 @@ async def main():
 
     # launch a headful browser with fixed window and viewport size
     session = BrowserSession(
-        headless=False,        # type: ignore
+        viewport_expansion=-1,   # type: ignore
+        highlight_elements=True,  # type: ignore
+        headless=True, # type: ignore
         disable_security=True,  # type: ignore
-        viewport={'width': W, 'height': H},      # type: ignore
-        window_size={'width': W, 'height': H},   # type: ignore
-        no_viewport=False,      # type: ignore
+        user_data_dir=None, # type: ignore
+        chromium_sandbox=False, # type: ignore
+        args=["--no-sandbox", "--disable-gpu-sandbox", "--disable-setuid-sandbox"], # type: ignore
     )
     await session.start()
     # Navigate to the starting URL
     page = await session.get_current_page()
+    await page.set_viewport_size({"width": W, "height": H})
     await page.goto("https://example.com")
     log("Page loaded")
 
