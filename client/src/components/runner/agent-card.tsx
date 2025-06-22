@@ -41,6 +41,7 @@ export function AgentCard() {
                         alt="Claude"
                         width={16}
                         height={16}
+                        className="animate-pulse"
                     />
                     <span>Running Claude Code</span>
                 </div>
