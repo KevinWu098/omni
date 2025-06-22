@@ -73,7 +73,7 @@ class AgentService:
             no_viewport=False,  # type: ignore
             viewport_expansion=-1,  # type: ignore
             highlight_elements=True,  # type: ignore
-            headless=False,  # type: ignore
+            headless=True,  # type: ignore
             disable_security=True,  # type: ignore
             user_data_dir=None,  # type: ignore
             chromium_sandbox=False,  # type: ignore
@@ -213,16 +213,16 @@ class Recorder:
 
     async def stop(self):
         self.running = False
-        proc = self.proc
-        if proc is None:
-            return
-        stdin = proc.stdin
-        if stdin is not None:
-            stdin.close()
-        try:
-            proc.wait(timeout=3)
-        except Exception:
-            proc.kill()
+        # proc = self.proc
+        # if proc is None:
+        #     return
+        # stdin = proc.stdin
+        # if stdin is not None:
+        #     stdin.close()
+        # try:
+        #     proc.wait(timeout=3)
+        # except Exception:
+        #     proc.kill()
 
     def _spawn_ffmpeg(self):
         seg_url = f"http://{HOST}:{PORT}/stream/{self.run_id}/segments/seg%09d.ts"
