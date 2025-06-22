@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Test } from "@/components/content";
 import { Timeline } from "@/components/timeline";
 import {
@@ -27,6 +27,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
     const [selectedStreamId, setSelectedStreamId] = useState<string>("0");
 
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const hasStartedStreams = useRef(false);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -40,7 +41,7 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
     const [mode, setMode] = useState<"live" | "dvr">("live");
 
     // Function to start all streams with slight delay between each
-    const startAllStreams = async () => {
+    const startAllStreams = useCallback(async () => {
         const streams = Array.from({ length: 4 }, (_, i) => {
             return new Promise((resolve) => {
                 setTimeout(() => {
@@ -64,12 +65,14 @@ export function RunnerViewer({ tests }: { tests: Test[] }) {
         });
 
         await Promise.all(streams);
-    };
+    }, [tests, sendCommand]);
 
     useEffect(() => {
-        void startAllStreams();
-    }, []);
-
+        if (!hasStartedStreams.current && tests.length > 0) {
+            hasStartedStreams.current = true;
+            void startAllStreams();
+        }
+    }, [startAllStreams, tests.length]);
 
     return (
         <ResizablePanelGroup
