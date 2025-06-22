@@ -296,7 +296,7 @@ export function VideoPlayer({ mode, multiple, runId }: VideoPlayerProps) {
     return (
         <div
             className={cn(
-                "bg-o-background relative h-[calc(100%-32px)] select-none text-white",
+                "relative h-[calc(100%-32px)] select-none bg-o-background text-white",
                 multiple && "my-auto flex h-full items-center justify-center"
             )}
         >

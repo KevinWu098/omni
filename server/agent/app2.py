@@ -9,11 +9,14 @@ import logging
 from uuid import uuid4
 from pydantic import BaseModel
 from typing import Dict, List, Optional
+from collections import defaultdict
 
 from service import VideoAgentService
+from edit_agent import pull_edit_pr_streaming
 
 # Mapping from run IDs to VideoAgentService instances
 agents: Dict[str, VideoAgentService] = {}
+logs = defaultdict(list)
 
 # Load environment variables
 load_dotenv()
@@ -46,9 +49,21 @@ class OfferParams(BaseModel):
     type: str
 
 
+class MakePRBody(BaseModel):
+    github_url: str
+    issue_description: str
+    branch: Optional[str] = None
+    cleanup: Optional[bool] = True
+
+
 @app.get("/diag")
 async def diag():
     return {"agents": list(agents.keys())}
+
+
+@app.get("/agent_logs/{run_id}")
+async def agent_logs(run_id: str):
+    return {"logs": logs[run_id]}
 
 
 @app.post("/run_command")
@@ -82,6 +97,8 @@ async def run_command(body: RunCommandBody):
             ).result()
             # Stream logs and results
             for log_data in service.run_command_streaming(commands):
+                if (log_data != "data: {'type': 'keepalive'}\n\n"):
+                    logs[run_id].append(log_data)
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
@@ -260,6 +277,65 @@ toggleLiveModeUI();
 @app.get("/view")
 async def view():
     return HTMLResponse(content=VIEW_HTML, media_type="text/html")
+
+
+@app.post("/make_pr")
+async def make_pr(body: MakePRBody):
+    """
+    Create a pull request using AI agent based on GitHub issue description
+    
+    Expected JSON body:
+    {
+        "github_url": "https://github.com/owner/repo",
+        "issue_description": "Description of the issue to fix",
+        "branch": "Optional branch to work with (default: main)",
+        "cleanup": true
+    }
+    """
+    github_url = body.github_url
+    issue_description = body.issue_description
+    branch = body.branch
+    cleanup = body.cleanup if body.cleanup is not None else True
+    
+    if not github_url:
+        raise HTTPException(status_code=400, detail="Missing 'github_url' in request body")
+    
+    if not issue_description:
+        raise HTTPException(status_code=400, detail="Missing 'issue_description' in request body")
+    
+    run_id = str(uuid4())
+    
+    def generate():
+        try:
+            # Stream the unique run ID as the first message
+            yield f"data: {{'type': 'uuid', 'id': '{run_id}'}}\n\n"
+            
+            # Use the streaming function to get real-time progress updates
+            for progress_update in pull_edit_pr_streaming(
+                prompt=issue_description,
+                git_url=github_url,
+                cleanup=cleanup,
+                branch=branch
+            ):
+                yield progress_update
+            
+            # Signal completion
+            yield "data: {'type': 'done'}\n\n"
+            
+        except Exception as e:
+            # Stream any unexpected errors
+            error_data = {
+                'type': 'error',
+                'message': f'Unexpected error: {str(e)}'
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+            yield "data: {'type': 'done'}\n\n"
+    
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
+    )
 
 
 # Add an exception handler on startup to silence benign ConnectionResetError in ProactorEventLoop
