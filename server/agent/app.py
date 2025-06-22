@@ -67,6 +67,8 @@ def run_command():
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
+            if data.get("soft_shutdown_on_end", False):
+                service.shutdown()
         except Exception as e:
             # Catch exceptions during streaming and send an message
             yield f"data: {{'type': 'error', 'content': '{str(e)}'}}\n\n"
@@ -87,7 +89,11 @@ def run_command():
 
 @app.route("/shutdown_run/<run_id>", methods=["POST"])
 def shutdown_run(run_id):
-    service = agents.pop(run_id, None)
+    data = request.get_json(force=True)
+    if (data.get("delete_video", False)):
+        service = agents.pop(run_id, None)
+    else:
+        service = agents.get(run_id)
     if service:
         service.shutdown()
         return jsonify({"message": f"Run ID {run_id} shut down successfully."})
