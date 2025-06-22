@@ -129,7 +129,7 @@ export function RunnerViewer({
                     </span>
 
                     <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
-                        https://staging-1720.scikit-learn.com/
+                        {" "}
                     </span>
 
                     <div

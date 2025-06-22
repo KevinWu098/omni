@@ -54,12 +54,12 @@ export function AllSidePanel({
     return (
         <>
             <div className="flex flex-col gap-y-4 px-2 py-4 pt-6">
-                <div className="flex flex-row gap-10 px-2">
+                {/* <div className="flex flex-row gap-10 px-2">
                     <BigText
                         label="Total Tests"
                         value="27"
                     />
-                </div>
+                </div> */}
 
                 <div className="flex flex-col gap-y-2">
                     <Input

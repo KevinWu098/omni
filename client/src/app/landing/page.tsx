@@ -2,10 +2,11 @@
 
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-
+import { useRouter } from "next/navigation";
 import "locomotive-scroll/dist/locomotive-scroll.css";
 
 function page() {
+    const router = useRouter();
     useEffect(() => {
         (async () => {
             const LocomotiveScroll = (await import("locomotive-scroll"))
@@ -89,7 +90,7 @@ function page() {
                             infrastructure failures before they reach
                             production.
                         </span>
-                        <Button className="z-10 mt-6 w-max rounded-full px-4">
+                        <Button className="z-10 mt-6 w-max rounded-full px-4" onClick={() => router.push("/")}>
                             <span
                                 style={{
                                     fontVariationSettings:
