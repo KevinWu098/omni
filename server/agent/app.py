@@ -1,13 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from dotenv import load_dotenv
+import json
 
-# from manager import AgentManager
 from service import AgentService
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+
 
 @app.route("/run_command", methods=["POST"])
 def run_command():
@@ -15,14 +15,24 @@ def run_command():
     command = data.get("command")
     if not command:
         return jsonify({"error": "Missing 'command' in JSON body"}), 400
+
     service = AgentService()
-    try:
-        result = service.run_command(command)
-        return jsonify({"result": result})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        service.shutdown()
+
+    def generate():
+        try:
+            for log_data in service.run_command_streaming(command):
+                yield log_data
+        finally:
+            service.shutdown()
+
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 if __name__ == "__main__":
