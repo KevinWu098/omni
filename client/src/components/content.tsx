@@ -72,7 +72,6 @@ export function Content({ prData }: ContentProps) {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     const handleRunTest = () => {
-        console.log("RUNNING TEST");
         const commands = activeTest?.steps.map((step) => step.title);
         if (!commands?.length) {
             toast.warning("No commands to run");
@@ -81,8 +80,6 @@ export function Content({ prData }: ContentProps) {
 
         sendCommand(commands?.join("\n"));
     };
-
-    console.log("EVENT DATA", eventData);
 
     return (
         <div className="bg-o-background flex h-full flex-row">
@@ -99,7 +96,11 @@ export function Content({ prData }: ContentProps) {
                 />
             </SidebarWrapper>
 
-            <Viewer prData={prData} />
+            <Viewer
+                prData={prData}
+                eventData={eventData}
+                activeTest={activeTest}
+            />
 
             <SidebarWrapper
                 title="Summary"
