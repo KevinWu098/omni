@@ -196,23 +196,16 @@ class Recorder:
         # 4. fallback to get_current_page()
         return await self.session.get_current_page()
     async def start(self):
-        self._spawn_ffmpeg()
+        if self.running:
+            return
+        if self.proc is None:
+            self._spawn_ffmpeg()
         # Use custom capture page selection
         self.page = await self._get_capture_page()  # type: ignore
         self.running = True
         asyncio.create_task(self._capture_loop())
     async def stop(self):
         self.running = False
-        proc = self.proc
-        if proc is None:
-            return
-        stdin = proc.stdin
-        if stdin is not None:
-            stdin.close()
-        try:
-            proc.wait(timeout=3)
-        except Exception:
-            proc.kill()
     def _spawn_ffmpeg(self):
         seg_url = f"http://{HOST}:{PORT}/stream/{self.run_id}/segments/seg%09d.ts"
         pl_url = f"http://{HOST}:{PORT}/stream/{self.run_id}/playlist.m3u8"
@@ -299,10 +292,6 @@ class VideoAgentService(AgentService):
         self.hls = MemHLS()
         self.pcs = set()
         self.recorder = Recorder(self.session, run_id)
-        start_future = asyncio.run_coroutine_threadsafe(
-            self.recorder.start(), self.loop
-        )
-        start_future.result()
     def handle_offer(self, params):
         async def _handle():
             offer_desc = RTCSessionDescription(sdp=params["sdp"], type=params["type"])

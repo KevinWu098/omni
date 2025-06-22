@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, Response, stream_with_context
 from dotenv import load_dotenv
 import json
+import asyncio
 from uuid import uuid4
 
 from service import VideoAgentService
@@ -62,16 +63,22 @@ def run_command():
         try:
             # Stream the unique run ID as the first message
             yield f"data: {{'type': 'uuid', 'id': '{run_id}'}}\n\n"
+            # Ensure recorder is running
+            asyncio.run_coroutine_threadsafe(service.recorder.start(), service.loop).result()
             # Stream logs and results
             for log_data in service.run_command_streaming(command):
                 yield log_data
             # Signal completion to client
             yield "data: {'type': 'done'}\n\n"
+            # Pause recording
+            asyncio.run_coroutine_threadsafe(service.recorder.stop(), service.loop).result()
             if data.get("soft_shutdown_on_end", False):
                 service.shutdown()
         except Exception as e:
             # Catch exceptions during streaming and send an message
             yield f"data: {{'type': 'error', 'content': '{str(e)}'}}\n\n"
+            # Pause recording on error
+            asyncio.run_coroutine_threadsafe(service.recorder.stop(), service.loop).result()
             service.shutdown()  # Shutdown on error
             del agents[run_id]  # Remove from active agents
         finally:
