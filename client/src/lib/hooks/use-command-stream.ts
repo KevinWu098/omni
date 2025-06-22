@@ -14,14 +14,14 @@ export function useCommandStream({
 }) {
     const [eventData, setEventData] = useState<EventData[]>([]);
 
-    const sendCommand = async (commands: string[], id: string) => {
+    const sendCommand = async (commands: string[], id: string | undefined) => {
         try {
             const response = await fetch(`${BACKEND_URL}/run_command`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ commands: commands, run_id: id }),
+                body: JSON.stringify({ commands, run_id: id }),
             });
 
             if (!response.ok) {

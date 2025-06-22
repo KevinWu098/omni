@@ -12,7 +12,7 @@ export function SidebarWrapper({
     return (
         <div
             className={cn(
-                "border-o-background relative w-[400px] min-w-[400px]",
+                "border-o-background relative h-[calc(100%)] w-[400px] min-w-[400px] border-l-2",
                 !show && "hidden"
             )}
         >

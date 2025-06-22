@@ -166,22 +166,41 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
         }
     }, [runId]);
 
+    const [mode, setMode] = useState<"live" | "dvr">("live");
+
     return (
         <ResizablePanelGroup
             direction="vertical"
             className="text-o-white flex w-full flex-col"
         >
-            <ResizablePanel className="bg-o-muted aspect-video w-full">
-                <div className="flex flex-row items-center justify-between px-4 py-2 font-medium">
-                    <span className="leading-none">Demo</span>
-                    <span className="leading-none">
+            <ResizablePanel
+                className="bg-o-background aspect-video w-full"
+                defaultSize={65}
+            >
+                <div className="flex flex-row items-center justify-between px-4 py-3 font-medium">
+                    <span className="w-24 truncate leading-none">Demo</span>
+
+                    <span className="flex w-fit grow justify-center truncate overflow-ellipsis leading-none">
                         https://staging-1720.scikit-learn.com/
                     </span>
-                    <span className="invisible leading-none">Demo</span>
+
+                    <div
+                        className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
+                        onClick={() =>
+                            setMode((prev) =>
+                                prev === "live" ? "dvr" : "live"
+                            )
+                        }
+                    >
+                        {mode === "live" ? "DVR" : "Live"}
+                    </div>
                 </div>
 
                 {runId ? (
-                    <VideoPlayer runId={runId} />
+                    <VideoPlayer
+                        mode={mode}
+                        runId={runId}
+                    />
                 ) : (
                     <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
                         No run ID
@@ -194,7 +213,10 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                 withHandle
             />
 
-            <ResizablePanel className="bg-o-base-foreground">
+            <ResizablePanel
+                className="bg-o-base-foreground"
+                defaultSize={35}
+            >
                 <Tabs
                     value={activeTab}
                     onValueChange={(value) =>
@@ -288,28 +310,36 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         className="mt-0 h-full"
                     >
                         <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
-                            <ScrollArea ref={scrollAreaRef}>
-                                {eventData?.map((event, index) => {
-                                    if (event && event.type === "log") {
-                                        return (
-                                            <div
-                                                key={index}
-                                                className="font-mono"
-                                                ref={
-                                                    index ===
-                                                    eventData.length - 1
-                                                        ? scrollAreaRef
-                                                        : null
-                                                }
-                                            >
-                                                &gt;
-                                                {event.content.split("]").at(1)}
-                                            </div>
-                                        );
-                                    }
-                                    return null;
-                                })}
-                            </ScrollArea>
+                            {eventData?.length ? (
+                                <ScrollArea ref={scrollAreaRef}>
+                                    {eventData.map((event, index) => {
+                                        if (event && event.type === "log") {
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="font-mono"
+                                                    ref={
+                                                        index ===
+                                                        eventData.length - 1
+                                                            ? scrollAreaRef
+                                                            : null
+                                                    }
+                                                >
+                                                    &gt;
+                                                    {event.content
+                                                        .split("]")
+                                                        .at(1)}
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </ScrollArea>
+                            ) : (
+                                <div className="text-o-primary my-auto flex h-full items-center justify-center">
+                                    Agent logs will display here.
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>

@@ -1,5 +1,5 @@
-import { Editor } from "@/components/runner/timeline/timeline";
+import { Timeline } from "@/components/timeline";
 
 export default function Page() {
-    return <Editor />;
+    return <Timeline />;
 }

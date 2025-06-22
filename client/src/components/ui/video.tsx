@@ -3,21 +3,30 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BACKEND_URL } from "@/lib/globals";
+import { cn } from "@/lib/utils";
 import Hls from "hls.js";
+import { Loader2Icon } from "lucide-react";
 
 export interface VideoPlayerProps {
+    mode: "live" | "dvr";
     runId: string;
+    multiple?: boolean;
 }
 
 /**
  * VideoPlayer component that supports both WebRTC (live) and HLS (DVR) playback modes.
  * WebRTC is used for low-latency live streaming, while HLS provides DVR capabilities.
  */
-export function VideoPlayer({ runId }: VideoPlayerProps) {
+export function VideoPlayer({ mode, multiple, runId }: VideoPlayerProps) {
     // State for tracking playback mode and status
-    const [live, setLive] = useState(true);
+    const [live, setLive] = useState(mode === "live");
     const [webrtcStatus, setWebrtcStatus] = useState("");
     const [timeInfo, setTimeInfo] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setLive(mode === "live");
+    }, [mode]);
 
     // Refs for video elements and streaming instances
     const hlsVideoRef = useRef<HTMLVideoElement>(null);
@@ -50,6 +59,7 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
      * Handles connection lifecycle, reconnection on failure, and stream attachment
      */
     const initializeWebRTC = async () => {
+        setIsLoading(true);
         // Clear any existing retry timeout
         if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
@@ -78,6 +88,10 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
             pc.onconnectionstatechange = () => {
                 console.log("WebRTC connection state:", pc.connectionState);
                 setWebrtcStatus(`webrtc: ${pc.connectionState}`);
+
+                if (pc.connectionState === "connected") {
+                    setIsLoading(false);
+                }
 
                 if (
                     ["failed", "disconnected", "closed"].includes(
@@ -169,6 +183,7 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
         } catch (error) {
             console.error("WebRTC connection failed:", error);
             setWebrtcStatus("webrtc: failed");
+            setIsLoading(false);
 
             // Only retry if we're still in live mode
             if (live) {
@@ -182,6 +197,7 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
      * Handles cleanup and initialization of respective streaming methods
      */
     const switchPlaybackMode = (toLive: boolean) => {
+        setIsLoading(true);
         // Clear any pending retry timeout
         if (retryTimeoutRef.current) {
             clearTimeout(retryTimeoutRef.current);
@@ -214,6 +230,7 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
 
                 hls.once(Hls.Events.MANIFEST_PARSED, () => {
                     video.play().catch(console.error);
+                    setIsLoading(false);
                 });
             }
         }
@@ -277,31 +294,26 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
     if (!runId) return <p className="text-white">Missing run_id</p>;
 
     return (
-        <div className="h-[calc(100%-32px)] select-none bg-black text-white">
-            {/* Control bar */}
-            <div className="flex items-center gap-2 bg-[#111] px-1.5 py-1">
-                <button
-                    onClick={() => setLive((prev) => !prev)}
-                    className="rounded bg-[#222] px-1.5 py-0.5"
-                >
-                    {live ? "LIVE" : "DVR"}
-                </button>
-
-                {webrtcStatus && live && (
-                    <span className="ml-2 text-sm text-green-500">
-                        {webrtcStatus}
-                    </span>
+        <div
+            className={cn(
+                "bg-o-background relative h-[calc(100%-32px)] select-none text-white",
+                multiple && "my-auto flex h-full items-center justify-center"
+            )}
+        >
+            {/* Video container */}
+            <div
+                className={cn(
+                    "relative h-[calc(100%-28px)]",
+                    multiple && "h-full"
+                )}
+            >
+                {/* Loading state */}
+                {isLoading && (
+                    <div className="bg-o-background/80 absolute inset-0 flex items-center justify-center">
+                        <Loader2Icon className="text-o-primary animate-spin duration-500" />
+                    </div>
                 )}
 
-                <span />
-
-                <div className="ml-auto text-xs tracking-wider text-gray-400">
-                    {timeInfo}
-                </div>
-            </div>
-
-            {/* Video container */}
-            <div className="h-[calc(100%-28px)]">
                 {/* HLS video for DVR mode */}
                 <video
                     ref={hlsVideoRef}
@@ -309,7 +321,11 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
                     autoPlay
                     muted
                     controls={!live}
-                    className={`aspect-video h-full w-full ${live ? "hidden" : ""}`.trim()}
+                    className={cn(
+                        "aspect-video h-full w-full",
+                        live && "hidden",
+                        multiple && "w-fit max-w-fit"
+                    )}
                 />
 
                 {/* WebRTC video for live mode */}
@@ -318,9 +334,27 @@ export function VideoPlayer({ runId }: VideoPlayerProps) {
                     autoPlay
                     muted
                     playsInline
-                    className={`pointer-events-none aspect-video h-full w-full ${live ? "" : "hidden"}`.trim()}
+                    className={cn(
+                        "pointer-events-none aspect-video h-full w-full",
+                        !live && "hidden",
+                        multiple && "w-fit max-w-fit"
+                    )}
                 />
             </div>
+
+            {!multiple && live && (
+                <>
+                    <div className="bg-o-red text-o-white absolute bottom-6 left-4 w-fit rounded-sm px-2 py-1 text-xs uppercase">
+                        Live
+                    </div>
+
+                    {timeInfo && (
+                        <div className="text-o-white bg-o-background/80 absolute bottom-6 right-4 w-fit rounded-sm px-2 py-1 text-base font-medium uppercase">
+                            {timeInfo}
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
