@@ -18,7 +18,7 @@ def call_fetch_agent(prompt, repo_path):
         agent = FetchAIAgent()
         
         # Run the agent loop with the custom prompt
-        result = agent.agent_loop(prompt, workspace_path=repo_path, max_iterations=5)
+        result = agent.agent_loop(prompt, workspace_path=repo_path, max_iterations=50)
         
         if result["success"]:
             print(f"✓ Fetch.ai agent completed task successfully")
