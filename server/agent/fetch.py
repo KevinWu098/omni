@@ -31,7 +31,7 @@ class FetchAIAgent:
         if not self.api_key:
             raise FetchAIError("API key not provided. Set ANTHROPIC_API_KEY environment variable.")
     
-    def view(self, path: Union[str, Path]) -> Dict[str, Any]:
+    def view(self, path: Union[str, Path]) -> Dict[str, Any]: # type: ignore
         """Read files or list directory contents"""
         path = Path(path)
         

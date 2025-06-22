@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoPlayer } from "@/components/ui/video";
 import { PRData } from "@/lib/github";
-import { EventData } from "@/lib/hooks/use-command-stream";
+import { EventData, StreamsEventData } from "@/lib/hooks/use-command-stream";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, MessagesSquareIcon } from "lucide-react";
 
@@ -59,7 +59,7 @@ const sampleComments = [
 
 interface ViewerProps {
     prData?: PRData | null;
-    eventData?: EventData[];
+    eventData?: StreamsEventData;
     activeTest: Test | undefined;
     runId: string | null;
 }
@@ -158,7 +158,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                 block: "end",
             });
         }
-    }, [activeTab, eventData?.length]);
+    }, [activeTab, eventData]);
 
     useEffect(() => {
         if (runId) {
@@ -171,10 +171,10 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
     return (
         <ResizablePanelGroup
             direction="vertical"
-            className="flex w-full flex-col text-o-white"
+            className="text-o-white flex w-full flex-col"
         >
             <ResizablePanel
-                className="aspect-video w-full bg-o-background"
+                className="bg-o-background aspect-video w-full"
                 defaultSize={65}
             >
                 <div className="flex flex-row items-center justify-between px-4 py-3 text-sm font-medium">
@@ -185,7 +185,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                     </span>
 
                     <div
-                        className="w-24 cursor-pointer text-right leading-none text-o-primary underline underline-offset-2 hover:bg-inherit hover:text-o-primary/80"
+                        className="text-o-primary hover:text-o-primary/80 w-24 cursor-pointer text-right leading-none underline underline-offset-2 hover:bg-inherit"
                         onClick={() =>
                             setMode((prev) =>
                                 prev === "live" ? "dvr" : "live"
@@ -203,13 +203,13 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                     />
                 ) : (
                     <div className="flex h-[calc(100%-32px)] w-full items-center justify-center">
-                        No run ID
+                        Awaiting agent initialization...
                     </div>
                 )}
             </ResizablePanel>
 
             <ResizableHandle
-                className="min-h-1 bg-o-outline"
+                className="bg-o-outline min-h-1"
                 withHandle
             />
 
@@ -224,19 +224,19 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                     }
                     className="h-full"
                 >
-                    <TabsList className="h-fit w-full justify-start rounded-none bg-o-background p-0">
+                    <TabsList className="bg-o-background h-fit w-full justify-start rounded-none p-0">
                         <TabsTrigger
                             value="github"
                             asChild
-                            className="box-border rounded-none border-r border-o-background data-[state=active]:bg-o-base-background"
+                            className="border-o-background data-[state=active]:bg-o-base-background box-border rounded-none border-r"
                         >
-                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
-                                <span className="text-xs font-medium leading-none text-o-white">
+                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
+                                <span className="text-o-white text-xs font-medium leading-none">
                                     Github
                                 </span>
                                 <div
                                     className={cn(
-                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
+                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
                                         activeTab === "github" && "visible"
                                     )}
                                 />
@@ -246,16 +246,16 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         <TabsTrigger
                             value="logs"
                             asChild
-                            className="rounded-none data-[state=active]:bg-o-base-background"
+                            className="data-[state=active]:bg-o-base-background rounded-none"
                             disabled={!activeTest}
                         >
-                            <div className="relative flex w-fit flex-col items-center justify-center bg-o-base-background px-4 py-2">
-                                <span className="text-xs font-medium leading-none text-o-white">
+                            <div className="bg-o-base-background relative flex w-fit flex-col items-center justify-center px-4 py-2">
+                                <span className="text-o-white text-xs font-medium leading-none">
                                     Agent Logs
                                 </span>
                                 <div
                                     className={cn(
-                                        "invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2 bg-o-primary",
+                                        "bg-o-primary invisible absolute bottom-0 left-1/2 h-[2px] w-3/4 -translate-x-1/2 translate-y-1/2",
                                         activeTab === "logs" && "visible"
                                     )}
                                 />
@@ -267,22 +267,22 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         value="github"
                         className="mt-0 h-full"
                     >
-                        <div className="box-border flex-col space-y-2 border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
+                        <div className="border-o-background bg-o-base-background box-border flex-col space-y-2 border-b-2 border-t-2 p-4">
                             <div className="flex w-full items-center justify-between">
                                 <span className="font-medium">{title}</span>
                                 <div className="flex items-center gap-[2px]">
-                                    <span className="text-sm font-medium text-o-green">
+                                    <span className="text-o-green text-sm font-medium">
                                         +1,139
                                     </span>
-                                    <span className="text-sm font-medium text-o-red">
+                                    <span className="text-o-red text-sm font-medium">
                                         -571
                                     </span>
                                     <div className="w-1" />
-                                    <div className="h-[10px] w-[10px] bg-o-green" />
-                                    <div className="h-[10px] w-[10px] bg-o-green" />
-                                    <div className="h-[10px] w-[10px] bg-o-green" />
-                                    <div className="h-[10px] w-[10px] bg-o-red" />
-                                    <div className="box-border h-[10px] w-[10px] border-[1.5px] border-o-muted-medium" />
+                                    <div className="bg-o-green h-[10px] w-[10px]" />
+                                    <div className="bg-o-green h-[10px] w-[10px]" />
+                                    <div className="bg-o-green h-[10px] w-[10px]" />
+                                    <div className="bg-o-red h-[10px] w-[10px]" />
+                                    <div className="border-o-muted-medium box-border h-[10px] w-[10px] border-[1.5px]" />
                                 </div>
                             </div>
                             <div className="flex w-full items-center justify-between">
@@ -300,7 +300,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                                         type="branch"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-o-muted">
+                                <div className="text-o-muted flex items-center gap-2 text-sm">
                                     <span>{comments.length}</span>
                                     <MessagesSquareIcon size={14} />
                                 </div>
@@ -322,18 +322,22 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                         value="logs"
                         className="mt-0 h-full"
                     >
-                        <div className="box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 border-o-background bg-o-base-background p-4">
-                            {eventData?.length ? (
+                        <div className="border-o-background bg-o-base-background box-border h-[calc(100%-28px)] flex-col space-y-2 overflow-auto border-b-2 border-t-2 p-4">
+                            {eventData && Object.keys(eventData)?.length ? (
                                 <ScrollArea ref={scrollAreaRef}>
-                                    {eventData.map((event, index) => {
+                                    {eventData["0"]?.map((event, index) => {
                                         if (event && event.type === "log") {
                                             return (
                                                 <div
                                                     key={index}
                                                     className="font-mono"
                                                     ref={
+                                                        eventData["0"]
+                                                            ?.length &&
                                                         index ===
-                                                        eventData.length - 1
+                                                            eventData["0"]
+                                                                ?.length -
+                                                                1
                                                             ? scrollAreaRef
                                                             : null
                                                     }
@@ -349,7 +353,7 @@ export function Viewer({ prData, eventData, activeTest, runId }: ViewerProps) {
                                     })}
                                 </ScrollArea>
                             ) : (
-                                <div className="my-auto flex h-full items-center justify-center text-o-primary">
+                                <div className="text-o-primary my-auto flex h-full items-center justify-center">
                                     Agent logs will display here.
                                 </div>
                             )}

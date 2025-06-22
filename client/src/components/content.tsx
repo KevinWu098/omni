@@ -29,7 +29,7 @@ interface ContentProps {
     prData?: PRData | null;
 }
 
-const defaultRunId = "d5b395a1-2097-4f8a-b919-7f552f1e7b61";
+const defaultRunId = "";
 
 export function Content({ prData }: ContentProps) {
     const [runId, setRunId] = useQueryState<string | null>("run_id", {
@@ -81,24 +81,64 @@ export function Content({ prData }: ContentProps) {
                     title: "Search for professor 'Shindler'",
                     image: "IMAGE",
                 },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "bb",
+            title: "Navigate to peterportal.org",
+            url: "https://peterportal.org",
+            steps: [
                 {
-                    title: "Click on 'CS 162'",
+                    title: "Press the x on the pop-up, only if there is one",
                     image: "IMAGE",
                 },
                 {
-                    title: "Scroll down",
+                    title: "Click on the 'Professors' tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Search for professor 'Shindler'",
                     image: "IMAGE",
                 },
             ],
             status: "enabled",
         },
         {
-            id: "sdfsfsf",
-            url: "https://docs.python.org/3/library/stdtypes.html#str.parse",
-            title: "Navigate to .parse() documentation",
+            id: "cc",
+            title: "Check IrvineHacks dinner time",
+            url: "https://www.irvinehacks.com",
             steps: [
                 {
-                    title: "Navigate to .parse() documentation",
+                    title: "Click on the Schedule tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Scroll through schedule to find dinner time",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Verify dinner time is displayed",
+                    image: "IMAGE",
+                },
+            ],
+            status: "enabled",
+        },
+        {
+            id: "dd",
+            title: "Check IrvineHacks dinner time",
+            url: "https://www.irvinehacks.com",
+            steps: [
+                {
+                    title: "Click on the Schedule tab",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Scroll through schedule to find dinner time",
+                    image: "IMAGE",
+                },
+                {
+                    title: "Verify dinner time is displayed",
                     image: "IMAGE",
                 },
             ],
@@ -110,17 +150,23 @@ export function Content({ prData }: ContentProps) {
     const activeTest = tests.find((test) => test.id === selectedTest?.id);
 
     const handleRunTest = () => {
-        const commands = ["Navigate to " + activeTest?.url, ...activeTest?.steps.map((step) => step.title as string) as string[]];
+        const commands = [
+            "Navigate to " + activeTest?.url,
+            ...(activeTest?.steps.map(
+                (step) => step.title as string
+            ) as string[]),
+        ];
+
         if (!commands?.length) {
             toast.warning("No commands to run");
             return;
         }
 
-        sendCommand(commands, undefined);
+        sendCommand(commands, undefined, "0");
     };
 
     return (
-        <div className="flex h-full flex-row bg-o-background">
+        <div className="bg-o-background flex h-full flex-row">
             <motion.div
                 className="h-full"
                 initial={{
@@ -182,10 +228,7 @@ export function Content({ prData }: ContentProps) {
                                 runId={runId}
                             />
                         ) : (
-                            <RunnerViewer
-                                runId={runId}
-                                eventData={eventData}
-                            />
+                            <RunnerViewer tests={tests} />
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -206,7 +249,7 @@ export function Content({ prData }: ContentProps) {
                         <motion.div
                             key="test-runner-sidebar"
                             className="h-full"
-                            initial={{ x: 300, opacity: 0 }}
+                            // initial={{ x: 300, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: 300, opacity: 0 }}
                             transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -215,7 +258,10 @@ export function Content({ prData }: ContentProps) {
                                 title="Summary"
                                 show={true}
                             >
-                                <RunnerSidebar />
+                                <RunnerSidebar
+                                    totalTests={tests.length}
+                                    instances={Object.keys(eventData).length}
+                                />
                             </SidebarWrapper>
                         </motion.div>
                     )}

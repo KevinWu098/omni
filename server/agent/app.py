@@ -3,9 +3,14 @@ from dotenv import load_dotenv
 import json
 import asyncio
 from uuid import uuid4
+import os
+import sys
+from pathlib import Path
 
 from service import VideoAgentService
 from flask_cors import CORS
+
+from edit_agent import pull_edit_pr_streaming
 
 # Mapping from run IDs to VideoAgentService instances
 agents = {}
@@ -152,6 +157,8 @@ def offer(run_id):
     except RuntimeError as e:
         # Handle closed event loop gracefully
         return jsonify({"error": "Agent not available"}), 410
+    
+
 
 
 # Simple UI route for viewing HLS/WebRTC with live/DVR toggle
@@ -229,6 +236,79 @@ toggleLiveModeUI();
 @app.route("/view")
 def view():
     return VIEW_HTML
+
+
+@app.route("/make_pr", methods=["POST"])
+def make_pr():
+    """
+    Create a pull request using AI agent based on GitHub issue description
+    
+    Expected JSON body:
+    {
+        "github_url": "https://github.com/owner/repo",
+        "issue_description": "Description of the issue to fix",
+        "pr_title": "Optional custom PR title",
+        "pr_body": "Optional custom PR body",
+        "source_branch": "Optional branch to clone from (default: main)",
+        "target_branch": "Optional branch to create PR against (default: main)",
+        "cleanup": true
+    }
+    """
+    data = request.get_json(force=True)
+    
+    github_url = data.get("github_url")
+    issue_description = data.get("issue_description")
+    pr_title = data.get("pr_title")
+    pr_body = data.get("pr_body")
+    source_branch = data.get("source_branch")
+    target_branch = data.get("target_branch")
+    cleanup = data.get("cleanup", True)
+    
+    if not github_url:
+        return jsonify({"error": "Missing 'github_url' in JSON body"}), 400
+    
+    if not issue_description:
+        return jsonify({"error": "Missing 'issue_description' in JSON body"}), 400
+    
+    run_id = str(uuid4())
+    
+    def generate():
+        try:
+            # Stream the unique run ID as the first message
+            yield f"data: {{'type': 'uuid', 'id': '{run_id}'}}\n\n"
+            
+            # Use the streaming function to get real-time progress updates
+            for progress_update in pull_edit_pr_streaming(
+                prompt=issue_description,
+                git_url=github_url,
+                cleanup=cleanup,
+                pr_title=pr_title,
+                pr_body=pr_body,
+                source_branch=source_branch,
+                target_branch=target_branch
+            ):
+                yield progress_update
+            
+            # Signal completion
+            yield "data: {'type': 'done'}\n\n"
+            
+        except Exception as e:
+            # Stream any unexpected errors
+            error_data = {
+                'type': 'error',
+                'message': f'Unexpected error: {str(e)}'
+            }
+            yield f"data: {json.dumps(error_data)}\n\n"
+            yield "data: {'type': 'done'}\n\n"
+    
+    return Response(
+        stream_with_context(generate()),
+        content_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 if __name__ == "__main__":
