@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import { PentagonIcon } from "lucide-react";
 
 const agents = [
     {
@@ -91,7 +93,10 @@ export function Timeline() {
     return (
         <div
             ref={containerRef}
-            className="flex h-full w-full flex-col overflow-hidden overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className={cn(
+                "flex h-full w-full flex-col overflow-hidden overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                "pointer-events-none"
+            )}
         >
             <div
                 style={{ width: `max(100%, ${duration / 10}px)` }}
@@ -180,14 +185,22 @@ export function Timeline() {
                     </div>
 
                     {/* Current time indicator */}
-                    <div
-                        className="duration-50 absolute bottom-0 top-0 w-0.5 bg-blue-500 transition-transform"
-                        style={{
-                            left: `${getPositionPercentage(currentTime)}%`,
-                            transform: "translateX(-50%)",
-                            height: `${agents.length * 2}rem`,
-                        }}
-                    />
+                    <div className="relative z-10">
+                        <div
+                            className="duration-50 bg-o-primary absolute bottom-0 top-0 w-0.5 transition-transform"
+                            style={{
+                                left: `${getPositionPercentage(currentTime)}%`,
+                                transform: "translateX(-50%)",
+                                height: `${agents.length * 2}rem`,
+                            }}
+                        />
+                        <PentagonIcon
+                            className="text-o-primary fill-o-primary absolute top-0 size-4 -translate-x-1/2 -translate-y-1/3 rotate-180"
+                            style={{
+                                left: `${getPositionPercentage(currentTime)}%`,
+                            }}
+                        />
+                    </div>
                 </div>
 
                 <div className="border-o-background relative mt-2 flex h-full flex-col border-t-2 pb-2 pt-8">
