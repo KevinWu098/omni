@@ -80,9 +80,16 @@ def offer(run_id):
     service = agents.get(run_id)
     if not service:
         return jsonify({"error": "Unknown run_id"}), 404
+    # If WebRTC stream is done, return gone
+    if getattr(service, 'done', False):
+        return jsonify({"error": "WebRTC stream has ended"}), 410
     params = request.get_json(force=True)
-    answer = service.handle_offer(params)
-    return jsonify(answer)
+    try:
+        answer = service.handle_offer(params)
+        return jsonify(answer)
+    except RuntimeError as e:
+        # Handle closed event loop gracefully
+        return jsonify({"error": "Agent not available"}), 410
 
 # Simple UI route for viewing HLS/WebRTC with live/DVR toggle
 VIEW_HTML = """
